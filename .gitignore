@@ -1,0 +1,9 @@
+# VSCode folder
+.vscode/
+
+# Build folders
+**/build/
+
+# Scripts
+*.sh
+*.bat
