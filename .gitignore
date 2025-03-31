@@ -1,9 +1,13 @@
-# VSCode folder
+# VSCode folder:
 .vscode/
 
-# Build folders
+# Any/All Build folders (checked recursively):
 **/build/
 
-# Scripts
+# Scripts:
 *.sh
 *.bat
+
+# Include and library folders:
+include/
+libs/
