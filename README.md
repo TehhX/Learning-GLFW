@@ -11,9 +11,9 @@ Before trying to compile or run anything, make sure you have GLFW3 installed. It
 Learning-GLFW
 ├───include
 │   └───GLFW
-│       └───glfw3.h
+│           glfw3.h
 └───libs
-    └───libglfw3.a
+        libglfw3.a
 ```
 
 ## Compiling Any Example With CMake
