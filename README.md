@@ -10,7 +10,8 @@ Before trying to compile or run anything, make sure you have GLFW3 installed. It
 ```
 Learning-GLFW
 ├───include
-│   └───glfw3.h
+│   └───GLFW
+│       └───glfw3.h
 └───libs
     └───libglfw3.a
 ```
