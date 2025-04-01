@@ -6,22 +6,20 @@ The root folder contains the gitignore, README, and license files, along with se
 
 ## Installing nesessary files
 
-Before trying to compile or run anything, make sure you have GLFW3 installed. It may be installed easily via package manager i.e. apt, or the header and library files may be placed in this project's folder for CMake to access them. GLAD files also need to be installed, and compiled into a "glad.a" library file in /libs/. This can be done by executing the following code in a Unix terminal with GCC:
-
-``` gcc glad.c -o gladLib.o && ar rcs glad.a gladLib.o && rm gladLib.o glad.c ```
-
-Also place the GLAD headers inside /include/If you are not using a package manager, you can download the nessessary files from [GLFW's website.](https://www.glfw.org/download.html) After this, all projects will be able to access the header and lib files, so long as your files are placed as such:
+Before trying to compile or run anything, make sure you have GLFW3 installed. It may be installed easily via package manager i.e. apt, or the header and library files may be placed in this project's folder for CMake to access them. GLAD files also need to be installed, and compiled into a "glad.a" library file in /libs/. Also place the GLAD headers inside /include/If you are not using a package manager, you can download the nessessary files from [GLFW's website.](https://www.glfw.org/download.html) glad.c will need to be compiled to glad.a inside /libs/ before compiling any project. After this, all projects will be able to access the header and lib files, so long as your files are placed as such:
 
 ```
 Learning-GLFW
 ├───include
-│   │      glad.h
-│   │      khrplatform.h
-│   └───GLFW
-│           glfw3.h
+│   ├───GLAD
+│   │       glad.h
+│   ├───GLFW
+│   │       glfw3.h
+│   └───KHR
+│          khrplatform.h
 └───libs
-        libglfw3.a
         glad.a
+        libglfw3.a
 ```
 
 ## Compiling Any Example With CMake

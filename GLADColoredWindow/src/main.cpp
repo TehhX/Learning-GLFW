@@ -1,4 +1,4 @@
-#include <glad.h>
+#include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
 
 constexpr unsigned int width  { 800 };
