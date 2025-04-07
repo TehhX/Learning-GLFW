@@ -25,3 +25,7 @@ Learning-GLFW
 ## Compiling Any Example With CMake
 
 Navigate to a subfolder such as EmptyWindow, then create and cd into a build folder (should be empty for now). Run CMake in the command line like: "cmake ..". After this, use a build system e.g. Make, Ninja to compile the files, and then run the resulting executable.
+
+## Compiling Any Example with CMake in VSCode Specifically
+
+Open VSCode in an example folder, NOT the root folder. From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.

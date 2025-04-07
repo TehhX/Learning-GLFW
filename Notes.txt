@@ -1,2 +1,31 @@
 This is the main note-taking file for this repo.
 
+- glfwInit() must be called before any other GLFW or related functions etc, returns true if successful and inverse
+
+- glfwWindowHint(GLFW_RESIZABLE, GL_FALSE) renders any windows created after unresizable.
+
+- glfwCreateWindow(int, int, int, const char[], GLFWmonitor*, GLFWwindow*) will return a GLFWwindow pointer, or window "handle" to a new window that will be created with the side affects of the function
+
+- glfwMakeCurrentContext(GLFWwindow*) probably does something, I don't know. Crashes on start without it.
+
+- gladLoadGLLoader(GLADloadproc) will start GLAD and its functionality, returns true if successful.
+
+- glViewport(int, int, int, int) sets the position and size of the viewport
+
+- glfwWindowShouldClose(GLFWwindow*) will return the shouldClose flag set on the passed window
+
+- glClearColor(GLfloat, GLfloat, GLfloat, GLfloat) sets the color bits (all default to 0 when not called) to be used with glClear(GLbitfield)
+
+- glClear(GLbitfield) clears the buffer specified by the pased bitfield, essentially drawing whatever is in the buffer
+
+- glfwSwapBuffers(GLFWwindow*) will swap the buffers of the passed window
+
+- glfwPollEvents() will check for input, window closes, etc.
+
+- glfwGetKey(GLFWwindow*, int) will check if the passed int (usually in the form of a GLFW macro e.g. GLFW_KEY_ESCAPE) is being pressed in the passed window
+
+- glfwSetWindowShouldClose(GLFWwindow*, int) will set the shouldClose flag on the passed window. The passed int should be GL_[TRUE, FALSE] instead of a regular int
+
+- glfwTerminate() will terminate the session of GLFW. glfwInit() will need to be called before using GLFW functionality again
+
+- glad.h must be included before glfw[version].h

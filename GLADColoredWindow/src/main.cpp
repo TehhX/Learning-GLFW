@@ -13,7 +13,7 @@ void framebufSizeCallback(GLFWwindow*, int newW, int newH) {
 void processInput(GLFWwindow* window) {
     // Exit window when Escape is pressed:
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+        glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
 void render(GLFWwindow* window) {
