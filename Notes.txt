@@ -1,4 +1,4 @@
-This is the main note-taking file for this repo.
+This is the main note-taking file for this repo. Most ideas are noted from learnopengl.com.
 
 - glfwInit() must be called before any other GLFW or related functions etc, returns true if successful and inverse
 
