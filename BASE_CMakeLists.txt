@@ -4,9 +4,11 @@
 set(CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Standard of C17 required:
+set(C_STANDARD 17)
+
 # Individual projects must specify ${SRC} with the names of all source files.
 list(TRANSFORM SRC PREPEND "src/")
-list(TRANSFORM SRC APPEND  ".cpp")
 
 # Create executable named EmptyWindow using files from SRC:
 add_executable(${PROJECT_NAME} ${SRC})
