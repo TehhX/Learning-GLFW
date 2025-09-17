@@ -3,30 +3,40 @@
 
 #include <stdio.h>
 
-int main(int argc, char* argv[]) {
+#define     WIDTH 1280
+#define    HEIGHT  720
+#define INFO_SIZE  512
+
+int main(int argc, char **argv) {
+    // Initializes GLFW. Required before anything else.
     if (!glfwInit())
-        return -1;
+        return 1;
 
     // Make windows created after this expression unresizable
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow* window = { glfwCreateWindow(800, 600, "DrawTriangle", NULL, NULL) };
+    // Create a window and assign window its handle.
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "DrawTriangle", NULL, NULL);
     if (!window)
-        return -2;
+        return 1;
 
+    // Makes window the current GL context. OpenGL requires a "context" for its functionality.
     glfwMakeContextCurrent(window);
 
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
-        return -3;
+    // Demonstrates the last line's change. As window *is* the current context, glfwGetCurrentContext == window.
+    if (glfwGetCurrentContext() != window)
+        return 1;
 
-    glViewport(0, 0, 800, 600);
+    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
+        return 1;
+
+    glViewport(0, 0, WIDTH, HEIGHT);
 
     // Vertex buffer stuff
-
     const float triangleVerts[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+        -0.5f, -0.7f, 0.0f,
+         0.5f, -0.7f, 0.0f,
+         0.0f,  0.7f, 0.0f
     };
 
     GLuint VBO;
@@ -34,31 +44,28 @@ int main(int argc, char* argv[]) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVerts), triangleVerts, GL_STATIC_DRAW);
 
-    const char* vertexShaderSource =
+    const char *vertexShaderSource =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "void main() {\n"
         "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
+        "}";
 
-    GLuint vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
-    /* Error check scope */ {
-        int success;
-        char infoLog[512];
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    GLint success;
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 
-        if (!success) {
-            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            printf("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s\n", infoLog);
-        }
+    if (!success) {
+        char infoLog[INFO_SIZE];
+        glGetShaderInfoLog(vertexShader, INFO_SIZE, NULL, infoLog);
+        puts(infoLog);
+        return 1;
     }
 
-    const char* fragmentShaderSource =
+    const char *fragmentShaderSource =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
         "\n"
@@ -66,27 +73,23 @@ int main(int argc, char* argv[]) {
         "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
         "}";
 
-    GLuint fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
+    GLuint shaderProgram = glCreateProgram();
 
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
-    /* Error check scope */ {
-        int success;
-        char infoLog[512];
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
 
-        if (!success) {
-            glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
-            printf("LINKING FAILED\n");
-        }
+    if (!success) {
+        char infoLog[INFO_SIZE];
+        glGetShaderInfoLog(shaderProgram, INFO_SIZE, NULL, infoLog);
+        puts(infoLog);
+        return 1;
     }
 
     glUseProgram(shaderProgram);
@@ -99,7 +102,6 @@ int main(int argc, char* argv[]) {
 
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
-
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
