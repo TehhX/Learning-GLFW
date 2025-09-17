@@ -10,7 +10,7 @@ set(C_STANDARD 17)
 # Individual projects must specify ${SRC} with the names of all source files.
 list(TRANSFORM SRC PREPEND "src/")
 
-# Create executable named EmptyWindow using files from SRC:
+# Create executable named after the project name using files from SRC:
 add_executable(${PROJECT_NAME} ${SRC})
 
 # Get root folder "Learning-GLFW":
