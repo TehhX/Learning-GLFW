@@ -7,7 +7,7 @@
 #define    HEIGHT  720
 #define INFO_SIZE  512
 
-int main(int argc, char **argv) {
+int main() {
     // Initializes GLFW. Required before anything else.
     if (!glfwInit())
         return 1;
@@ -19,6 +19,9 @@ int main(int argc, char **argv) {
 
     // Make windows created after this expression unresizable
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+    // Turns on the window border which contains minimize, maximize, close. On be default. Can also be turned off.
+    glfwWindowHint(GLFW_DECORATED, GL_TRUE);
 
     // Create a window and assign window its handle. The fourth argument (monitor) specifies the monitor if exclusive fullscreen is desired, NULL if windowed. The last argument (share) is for sharing resources between windows, and is not required.
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "DrawTriangle", NULL, NULL);
@@ -32,44 +35,52 @@ int main(int argc, char **argv) {
     if (glfwGetCurrentContext() != window)
         return 1;
 
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
+    // Loads GL functions into the current context. Alternative to gladLoadGLLoader(...) from earlier commits.
+    if (!gladLoadGL())
         return 1;
 
+    // The first two arguments specify offset from the bottom left of the window (x, y). The last two the width and height (w, h). IMPORTANT NOTE: It is NOT from top left as with most graphical programs. Not calling it seems to make it fit the window.
     glViewport(0, 0, WIDTH, HEIGHT);
 
-    // Screen location of each of the triangle's vertices. The screen starts at (-1, -1, 0) at the top left, and ends at (1, 1, 0) bottom right.
+    // Will take screen co-ordinates in pixels like ([0, WIDTH], [0, HEIGHT]) and put them into the context of [-1, 1]. Use ...GL_X for X co-ord, ...GL_Y for Y co-ord.
+    #define __STD_TO_GL(VAL, MAX) ((VAL) * (2.0f / (MAX)) - 1)
+    #define STD_TO_GL_X(VAL) (__STD_TO_GL((VAL), WIDTH))
+    #define STD_TO_GL_Y(VAL) (__STD_TO_GL((VAL), HEIGHT) * -1)
+
+    // General triangle sizer (Pixels).
+    #define TRI_SIZE 250
+
+    // Screen location of each of the triangle's vertices. The screen starts at (-1, -1, -1) at the back top left, and ends at (1, 1, 1) front bottom right.
     GLfloat triangle_vertices[] = {
-        -0.5f, -0.7f, 0.0f,
-         0.5f, -0.7f, 0.0f,
-         0.0f,  0.7f, 0.0f
+        STD_TO_GL_X(640 - 1.5f * TRI_SIZE), STD_TO_GL_Y(360 + TRI_SIZE), 0,
+        STD_TO_GL_X(640 + 1.5f * TRI_SIZE), STD_TO_GL_Y(360 + TRI_SIZE), 0,
+        STD_TO_GL_X(640),                   STD_TO_GL_Y(360 - TRI_SIZE), 0
     };
 
-    // Vertex shader, creates the locations of the vertices.
-    const char *vertexShaderSource =
+    // Vertex shader, creates the position of the verticies. GLuint's are references to GL data e.g a shader, similar to pointers (I think).
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    static const char *vertexShaderSource =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "void main() {\n"
         "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
         "}";
-
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
     // Fragment shader, creates the colour of the vertices.
-    const char *fragmentShaderSource =
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    static const char *fragmentShaderSource =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
         "\n"
         "void main() {\n"
-        "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "    FragColor = vec4(0.25f, 0.8f, 0.6f, 1);\n"
         "}";
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
-    // Shader program 
+    // The shader program will hold all shaders created to make the triangle.
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
@@ -120,9 +131,11 @@ int main(int argc, char **argv) {
     while (!glfwWindowShouldClose(window))
         glfwPollEvents();
 
+    // Cleanup.
     glDeleteVertexArrays(1, &vertex_array_object);
     glDeleteBuffers(1, &vertex_buffer_object);
     glDeleteProgram(shaderProgram);
 
+    // Terminate GLFW as it is no longer required.
     glfwTerminate();
 }
