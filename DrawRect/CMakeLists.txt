@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
-project(DrawTriangle LANGUAGES C CXX)
+project(DrawRect LANGUAGES C)
 
 set(SRC
-    main.cpp
+    main.c
 )
 
 include("../BASE_CMakeLists.txt")
