@@ -24,6 +24,9 @@ int main() {
 
     gladLoadGL();
 
+    // Don't limit FPS. Default is 1 for vsync (seems to limit to monitor hz e.g fps <= 150 on 144hz monitor), 0 seems to uncap.
+    glfwSwapInterval(0);
+
     GLref v_shader = glCreateShader(GL_VERTEX_SHADER);
     const char *v_source =
         "#version 330 core\n"
@@ -109,7 +112,7 @@ int main() {
         if (current < min)
             min = current;
 
-        printf("CURR: %7.lu | MIN: %6.lu | FPS: %6.2f\n", current, min, 1000 / (((float) current) / 1000));
+        printf("CURR-T: %7.lu | MIN-T: %6.lu | FPS: %6.2f\n", current, min, 1000 / (((float) current) / 1000));
     }
 
     glDeleteProgram(s_prog);
