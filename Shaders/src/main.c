@@ -1,7 +1,7 @@
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
 
-// Make sure to translate shaders.vert and shaders.frag into header/source files. More info in ROOT/README.md/Shader Files.
+// Make sure to translate shaders.vert and shaders.frag into header/source files using "Learning-GLFW/Utilities/embed_glsl.c".
 #include "generated_shaders.h"
 
 #include "stdlib.h"
@@ -37,7 +37,7 @@ int main() {
 
     gladLoadGL();
 
-    // Don't limit FPS. Default is 1 for vsync (seems to limit to monitor hz e.g fps <= 150 on 144hz monitor), 0 seems to uncap.
+    // Sets how many updates to wait for per frame. Where n is SwapInterval input value, <monitor-hz> / n = FPS-cap.
     glfwSwapInterval(0);
 
     GLref v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -65,9 +65,9 @@ int main() {
     };
 
     GLfloat vertex_attribs_2[] = {
-        -1, -1.0, 0, 0, 0, 1,
-         0, -0.1, 0, 0, 1, 0,
-         1, -1.0, 0, 0, 1, 0
+        -1, -1.0, 0, 1, 0, 0,
+         0, -0.1, 0, 0, 1, 1,
+         1, -1.0, 0, 1, 0, 0
     };
 
     GLref v_arr;
@@ -84,7 +84,7 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void *) (sizeof(GLfloat) * 3));
     glEnableVertexAttribArray(1);
 
-    glClearColor(0.3, 0.3, 0.3, 1);
+    glClearColor(0.5, 0.85, 0.3, 1);
 
     while (!glfwWindowShouldClose(win)) {
 #ifdef CALCULATE_FPS
@@ -110,6 +110,8 @@ int main() {
     }
 
     glDeleteProgram(s_prog);
+    glDeleteBuffers(1, &v_buf);
+    glDeleteVertexArrays(1, &v_arr);
 
     glfwTerminate();
 }

@@ -1,18 +1,10 @@
-/* EMBED_GLSL
-   reads files written in GLSL and ports them to .h and .c files. */
+// Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [16,19] or run without args for help.
 
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 
-int glsl_sources_count = 0;
-FILE *c_header, *c_source, **glsl_sources = NULL;
-
-static inline void err(const char *msg)
-{
-    puts(msg);
-    exit(1);
-}
+#define err(MSG) { puts(MSG); exit(1); }
 
 int main(int argc, char **argv)
 {
@@ -21,24 +13,28 @@ int main(int argc, char **argv)
     if (argc < 3)
     {
         err(
-            "EMBED_GLSL Help:\n"
-            "  argv[0]: Output header file path and name e.g my_header.h\n"
-            "  argv[1]: Output source file path and name e.g my_source.c\n"
-            "  argv[2..]: Input source files e.g my_thing.glsl other_thing.glsl"
+            " Arg Position |          Expectation             |    Example   \n"
+            "----------------------------------------------------------------\n"
+            "       0      | Output header file path and name |  my_header.h \n"
+            "       1      | Output source file path and name |  my_source.c \n"
+            "    [2,inf)   |        Input source files        | my_thing.vert\n"
         );
     }
 
 // Open files:
+    FILE *c_header;
     if (!(c_header = fopen(argv[0], "w")))
     {
         err("Bad c_header open.");
     }
 
+    FILE *c_source;
     if (!(c_source = fopen(argv[1], "w")))
     {
         err("Bad c_source open.");
     }
 
+    FILE **glsl_sources = NULL;
     const int glsl_sources_c = argc - 2;
     for (int i = 0; i < glsl_sources_c; ++i)
     {
@@ -71,14 +67,18 @@ int main(int argc, char **argv)
     }
 
 // Processing:
-    // TODO: Implement header guard in generated header file.
-    fputs("// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY.\n", c_header);
-    fputs("// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY.\n", c_source);
+    /* TODO:
+     * Implement header guard in generated header file
+     * Unnecessary duplicate spaces increasing file size without reason should be removed
+     * Tab characters should be replaced by single spaces */
+
+    fputs("// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY.\n\n", c_header);
+    fputs("// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY.\n\n", c_source);
 
     for (int i = 0, next; i < glsl_sources_c; ++i)
     {
-        fprintf(c_header, "\nextern const char * const %s;", argv[i + 2]);
-        fprintf(c_source, "\nconst char * const %s = \"", argv[i + 2]);
+        fprintf(c_header, "extern const char * const %s;\n", argv[i + 2]);
+        fprintf(c_source, "const char * const %s = \"", argv[i + 2]);
 
         while ((next = fgetc(glsl_sources[i])) != EOF)
         {
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
             }
         }
 
-        fputs("\";", c_source);
+        fputs("\";\n", c_source);
     }
 
     fputc('\n', c_source);
