@@ -1,4 +1,13 @@
-// Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [16,19] or run without args for help.
+/* EMBED GLSL
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [16,19] or run without args for help.
+
+TODO LIST:
+    * Implement header guard in generated header file
+    * Unnecessary duplicate spaces increasing file size without reason should be removed
+    * Tab characters should be replaced by single spaces
+    * Remove comments etc. from output
+    * Consider reducing all things into a single line after the generation warning comment and header guard
+*/
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -67,11 +76,6 @@ int main(int argc, char **argv)
     }
 
 // Processing:
-    /* TODO:
-     * Implement header guard in generated header file
-     * Unnecessary duplicate spaces increasing file size without reason should be removed
-     * Tab characters should be replaced by single spaces */
-
     fputs("// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY.\n\n", c_header);
     fputs("// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY.\n\n", c_source);
 

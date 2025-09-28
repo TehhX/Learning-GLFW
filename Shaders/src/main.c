@@ -6,6 +6,7 @@
 
 #include "stdlib.h"
 #include "stdio.h"
+#include "math.h"
 
 // Define to calculate FPS each frame, else comment out. Requires "sys/time.h".
 #define CALCULATE_FPS
@@ -84,13 +85,14 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void *) (sizeof(GLfloat) * 3));
     glEnableVertexAttribArray(1);
 
-    glClearColor(0.5, 0.85, 0.3, 1);
-
     while (!glfwWindowShouldClose(win)) {
 #ifdef CALCULATE_FPS
         struct timeval start;
         gettimeofday(&start, NULL);
 #endif
+        // Cycle the background color based on time.
+        float color_val = sin(glfwGetTime()) / 2 + 0.5;
+        glClearColor(color_val / 2 + 0.25, 1 - color_val, color_val, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_attribs_1), vertex_attribs_1, GL_STATIC_DRAW);
