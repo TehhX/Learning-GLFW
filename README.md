@@ -29,3 +29,6 @@ Navigate to a subfolder such as EmptyWindow, then create and cd into a build fol
 ## Compiling Any Example with CMake in VSCode Specifically
 
 Open VSCode in an example folder, NOT the root folder. From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
+
+## Shader files
+Files like *.vert, *.glsl etc. must be translated into header/source files for any given project which uses them. Use Utilities/embed_glsl.c to translate them into their files.
