@@ -9,4 +9,4 @@ set(SRC
     generated_shaders.c # Shader files placed inside string literals by "embed_glsl.c".
 )
 
-include("../BASE_CMakeLists.txt")
+include("../BASE_CMakeLists.cmake")

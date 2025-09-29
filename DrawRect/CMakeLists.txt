@@ -5,4 +5,4 @@ set(SRC
     main.c
 )
 
-include("../BASE_CMakeLists.txt")
+include("../BASE_CMakeLists.cmake")
