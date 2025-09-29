@@ -1,7 +1,7 @@
 /*
 EMBED GLSL
 ==========
-Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [25,29] or run without args for help.
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [25,28] or run without args for help.
 
 TODO:
     * Remove "/*" style comments from output.
@@ -12,8 +12,6 @@ TODO:
 #include "string.h"
 #include "stdbool.h"
 
-#define err(MSG) puts(MSG); exit(1)
-
 int main(int argc, char **argv)
 {
     // First argument not necessary.
@@ -21,44 +19,44 @@ int main(int argc, char **argv)
 
     if (argc < 3)
     {
-        err(
+        puts(
             " Arg Position |          Expectation             |    Example   \n"
             "----------------------------------------------------------------\n"
             "       0      |  Output header/source file path  |  Project/src \n"
             "    [1,inf)   |        Input source files        | my_thing.vert\n"
         );
+        return 1;
     }
 
 // Open files:
-    // Check if path ends in a slash:
-    const int path_len = strlen(argv[0]) + 1;
-    bool has_slash = argv[0][path_len - 1] == '/';
-
-#define HEADER_NAME "/generated_shaders.h"
-    FILE *f_header;
+    FILE *f_header, *f_source;
     {
-        char *header_fpath = (char *) memcpy(malloc(sizeof(char) * (sizeof(HEADER_NAME) + path_len + !has_slash + 1)), argv[0], path_len);
-        memcpy(header_fpath + path_len - has_slash - 1, HEADER_NAME, sizeof(HEADER_NAME));
-        if (!(f_header = fopen(header_fpath, "w")))
-        {
-            err("Bad f_header open.");
-        }
-        free(header_fpath);
-    }
-#undef HEADER_NAME
+        const int path_len = strlen(argv[0]) + 1;
+        const bool end_is_slash = argv[0][path_len - 1] == '/';
 
-#define SOURCE_NAME "/generated_shaders.c"
-    FILE *f_source;
-    {
-        char *source_fpath = (char *) memcpy(malloc(sizeof(char) * (sizeof(SOURCE_NAME) + path_len + !has_slash + 1)), argv[0], path_len);
-        memcpy(source_fpath + path_len - has_slash - 1, SOURCE_NAME, sizeof(SOURCE_NAME));
-        if (!(f_source = fopen(source_fpath, "w")))
+#define BASE_NAME "/generated_shaders."
+#define FULL_PATH_LEN (sizeof(BASE_NAME) + 1)
+        char *path_manip = (char *) memcpy(malloc(sizeof(char) * (FULL_PATH_LEN + path_len + !end_is_slash + 1)), argv[0], path_len);
+
+        // Header file:
+        const int begin_offset = path_len - end_is_slash - 1;
+        memcpy(path_manip + begin_offset, BASE_NAME "h", FULL_PATH_LEN);
+        f_header = fopen(path_manip, "w");
+
+        // Source file:
+        path_manip[FULL_PATH_LEN + 1] = 'c';
+#undef FULL_PATH_LEN
+#undef BASE_NAME
+        f_source = fopen(path_manip, "w");
+        free(path_manip);
+
+        // Error checking:
+        if (!f_header || !f_source)
         {
-            err("Bad f_source open.");
+            puts("Bad generated header/source open.");
+            return 2;
         }
-        free(source_fpath);
     }
-#undef SOURCE_NAME
 
     FILE **glsl_sources = 0;
     const int glsl_sources_c = argc - 1;
@@ -68,7 +66,8 @@ int main(int argc, char **argv)
 
         if (!(glsl_sources[i] = fopen(argv[i + 1], "r")))
         {
-            err("Bad glsl_sources open.");
+            puts("Bad glsl_sources open.");
+            return 3;
         }
 
         int char_ind = strlen(argv[i + 1]) - 1;
@@ -105,21 +104,24 @@ int main(int argc, char **argv)
         bool writing = true;
         while ((next = fgetc(glsl_sources[i])) != EOF)
         {
-            if (next == '\n' && last != '\n')
+            if (next == '\n')
             {
-                if (writing)
+                if (last != '\n')
                 {
-                    // If last was space, overwrite space with newline:
-                    if (last == ' ')
+                    if (writing)
                     {
-                        fseek(f_source, -1, SEEK_CUR);
-                    }
+                        // If last was space, overwrite space with newline:
+                        if (last == ' ')
+                        {
+                            fseek(f_source, -1, SEEK_CUR);
+                        }
 
-                    fputs("\\n", f_source);
-                }
-                else
-                {
-                    writing = true;
+                        fputs("\\n", f_source);
+                    }
+                    else
+                    {
+                        writing = true;
+                    }
                 }
             }
             else
@@ -159,21 +161,18 @@ int main(int argc, char **argv)
     fputs("\n#endif\n", f_header);
 
 // Close files:
-    if (fclose(f_header))
+    if (fclose(f_header) || fclose(f_source))
     {
-        err("Bad close f_header.");
-    }
-
-    if (fclose(f_source))
-    {
-        err("Bad close f_source.");
+        puts("Bad generated header/source close.");
+        return 4;
     }
 
     for (int i = 0; i < glsl_sources_c; ++i)
     {
         if (fclose(glsl_sources[i]))
         {
-            err("Bad close_glsl");
+            puts("Bad glsl_sources close.");
+            return 5;
         }
     }
     free(glsl_sources);
