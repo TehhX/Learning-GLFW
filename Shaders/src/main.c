@@ -8,11 +8,9 @@
 #include "stdio.h"
 #include "math.h"
 
-// Define to calculate FPS each frame, else comment out. Requires "sys/time.h".
-#define CALCULATE_FPS
-
 #ifdef CALCULATE_FPS
 #include "sys/time.h"
+typedef struct timeval timeval_t;
 #endif
 
 #define WIDTH  800
@@ -87,7 +85,7 @@ int main() {
 
     while (!glfwWindowShouldClose(win)) {
 #ifdef CALCULATE_FPS
-        struct timeval start;
+        timeval_t start;
         gettimeofday(&start, NULL);
 #endif
         // Cycle the background color based on time.
@@ -105,7 +103,7 @@ int main() {
 
         glfwPollEvents();
 #ifdef CALCULATE_FPS
-        struct timeval stop;
+        timeval_t stop;
         gettimeofday(&stop, NULL);
         printf("FPS: %12.2f\n", 1 / ustos(stop.tv_usec - start.tv_usec));
 #endif

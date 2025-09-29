@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.28)
 project(Shaders LANGUAGES C)
 
+# Calculate the FPS each frame.
+# add_compile_definitions(CALCULATE_FPS)
+
 set(SRC
     main.c
-    generated_shaders.c
+    generated_shaders.c # Shader files placed inside string literals by "embed_glsl.c".
 )
 
 include("../BASE_CMakeLists.txt")
