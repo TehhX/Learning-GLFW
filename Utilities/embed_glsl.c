@@ -1,5 +1,5 @@
 /* EMBED GLSL
-Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [16,19] or run without args for help.
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [25,29] or run without args for help.
 
 TODO LIST:
     * Implement header guard in generated header file
