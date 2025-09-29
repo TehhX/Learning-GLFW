@@ -2,6 +2,9 @@
 EMBED GLSL
 ==========
 Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [25,29] or run without args for help.
+
+TODO:
+    * Remove "/*" style comments from output.
 */
 
 #include "stdio.h"
@@ -9,7 +12,7 @@ Reads files written in GLSL and transpiles(?) them to .h and .c files to be incl
 #include "string.h"
 #include "stdbool.h"
 
-#define err(MSG) { (MSG); exit(1); }
+#define err(MSG) puts(MSG); exit(1)
 
 int main(int argc, char **argv)
 {
@@ -28,10 +31,8 @@ int main(int argc, char **argv)
 
 // Open files:
     // Check if path ends in a slash:
-    int path_index = 0;
-    while (argv[0][path_index++]);
-    bool has_slash = argv[0][path_index - 1] == '/';
-#define path_len ((const int) path_index)
+    const int path_len = strlen(argv[0]) + 1;
+    bool has_slash = argv[0][path_len - 1] == '/';
 
 #define HEADER_NAME "/generated_shaders.h"
     FILE *f_header;
@@ -99,29 +100,34 @@ int main(int argc, char **argv)
         fprintf(f_header, "%s%c", argv[i + 1], delim);
         fprintf(f_source, "%s = \"", argv[i + 1]);
 
-        // Read code into string:
+        // Read code into string while removing redundancies, comments etc:
         char last = 0, next;
         bool writing = true;
         while ((next = fgetc(glsl_sources[i])) != EOF)
         {
-            if (next == '\n')
+            if (next == '\n' && last != '\n')
             {
-                if (last != '\n')
+                if (writing)
                 {
-                    if (writing)
+                    // If last was space, overwrite space with newline:
+                    if (last == ' ')
                     {
-                        fputs("\\n", f_source);
+                        fseek(f_source, -1, SEEK_CUR);
                     }
-                    else
-                    {
-                        writing = true;
-                    }
+
+                    fputs("\\n", f_source);
+                }
+                else
+                {
+                    writing = true;
                 }
             }
             else
             {
+                // Comment syntax:
                 if (next == '/' && last == '/')
                 {
+                    // Undo '/' write from last loop:
                     fseek(f_source, -1, SEEK_CUR);
                     writing = false;
                     continue;
