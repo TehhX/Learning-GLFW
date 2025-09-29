@@ -26,3 +26,6 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${ROOT}/libs/glad.a)
 target_include_directories(${PROJECT_NAME} PRIVATE ${ROOT}/include/)
+
+# Link math library ("libm", lib presumed thus just 'm') for sin, pow etc.
+target_link_libraries(${PROJECT_NAME} PRIVATE m)
