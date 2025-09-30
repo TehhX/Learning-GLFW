@@ -20,7 +20,7 @@ include/
 libs/
 
 # Generated GLSL files
-generated_shaders.*
+gensh.[hc]
 
 # Ignored files
 *_IGN.*

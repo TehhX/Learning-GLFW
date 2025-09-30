@@ -6,7 +6,7 @@ project(Shaders LANGUAGES C)
 
 set(SRC
     main.c
-    generated_shaders.c # Shader files placed inside string literals by "embed_glsl.c".
+    gensh.c # Shader files placed inside string literals by "embed_glsl.c".
 )
 
 include("../BASE_CMakeLists.cmake")

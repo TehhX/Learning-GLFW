@@ -2,7 +2,7 @@
 #include "GLFW/glfw3.h"
 
 // Make sure to translate shaders.vert and shaders.frag into header/source files using "Learning-GLFW/Utilities/embed_glsl.c".
-#include "generated_shaders.h"
+#include "gensh.h"
 
 #include "stdlib.h"
 #include "stdio.h"
