@@ -1,7 +1,7 @@
 /*
 EMBED GLSL
 ==========
-Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [25,28] or run without args for help.
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [39,42] or run without args for help.
 
 TODO:
     * Remove "/*" style comments from output.
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     // First argument not necessary.
     --argc; ++argv;
 
-    if (argc < 3)
+    if (argc == 0)
     {
         puts(
             " Arg Position |          Expectation             |    Example   \n"
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
     {
         char delim = (i == argc - 1 ? ';' : ','); // Will be a comma between variables and a semicolon for the last variable.
         fprintf(f_header, "%s%c", argv[i], delim);
-        fprintf(f_source, "%s = \"", argv[i]);
+        fprintf(f_source, "%s=\"", argv[i]);
 
         // Read code into string while removing redundancies, comments etc:
         char last = 0, next;
