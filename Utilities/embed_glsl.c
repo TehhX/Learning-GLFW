@@ -1,7 +1,7 @@
 /*
 EMBED GLSL
 ==========
-Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [39,42] or run without args for help.
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [37,40] or run without args for help.
 
 TODO:
     * Remove "/*" style comments from output.
@@ -12,18 +12,16 @@ TODO:
 #include "string.h"
 #include "stdbool.h"
 
-// NOTE: Make sure to reflect any changes to GENERATED_SHADERS_NAME and/or GENERATED_SHADERS_GUARD in all relevant files or unexpected errors may arise.
-
 #ifndef GENERATED_SHADERS_NAME
-#define GENERATED_SHADERS_NAME "gensh" // The file name of the output shader .c and .h files.
+    #define GENERATED_SHADERS_NAME "gensh" // The file name of the output shader .c and .h files.
 #endif
 
 #ifndef GENERATED_SHADERS_GUARD
-#define GENERATED_SHADERS_GUARD "__GENSH_H__" // The header guard definition.
+    #define GENERATED_SHADERS_GUARD "__GENSH_H__" // The header guard definition.
 #endif
 
 #ifndef STR_TYPEDEF_TNAME
-#define STR_TYPEDEF_TNAME "__genshstr" // The type name used in the header and source file.
+    #define STR_TYPEDEF_TNAME "__genshstr" // The type name used in the header and source file.
 #endif
 
 #define BASE_NAME "/" GENERATED_SHADERS_NAME "."
