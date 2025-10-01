@@ -1,3 +1,4 @@
+// GLAD must be included before glfw3:
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
 

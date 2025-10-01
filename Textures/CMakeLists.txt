@@ -3,7 +3,6 @@ project(Textures LANGUAGES C)
 
 set(SRC
     main.c
-    gensh.c
 )
 
 include("../BASE_CMakeLists.cmake")

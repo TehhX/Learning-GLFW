@@ -1,7 +1,7 @@
 /*
 EMBED GLSL
 ==========
-Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [37,40] or run without args for help.
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [35, 38] or run without args for help.
 
 TODO:
     * Remove "/*" style comments from output.
@@ -12,66 +12,63 @@ TODO:
 #include "string.h"
 #include "stdbool.h"
 
-#ifndef GENERATED_SHADERS_NAME
-    #define GENERATED_SHADERS_NAME "gensh" // The file name of the output shader .c and .h files.
+#ifndef GENERATED_SHADER_FNAME
+    #define GENERATED_SHADER_FNAME "/gensh.h" // The file name of the output shader .h file. Must start with path delimiter.
 #endif
 
-#ifndef GENERATED_SHADERS_GUARD
-    #define GENERATED_SHADERS_GUARD "__GENSH_H__" // The header guard definition.
+#ifndef GENERATED_SHADER_GUARD
+    #define GENERATED_SHADER_GUARD "__GENSH_H__" // The header guard definition.
 #endif
 
 #ifndef STR_TYPEDEF_TNAME
     #define STR_TYPEDEF_TNAME "__genshstr" // The type name used in the header and source file.
 #endif
 
-#define BASE_NAME "/" GENERATED_SHADERS_NAME "."
-
 int main(int argc, char **argv)
 {
-    // First argument not necessary.
+    // First argument (exec line) not necessary.
     --argc; ++argv;
 
     if (argc == 0)
     {
         puts(
-            " Arg Position |          Expectation             |    Example   \n"
-            "----------------------------------------------------------------\n"
-            "       0      |  Output header/source file path  |  Project/src \n"
-            "    [1,inf)   |        Input source files        | my_thing.vert\n"
+            "    Arg Position   |           Expectation            |    Example   \n"
+            "---------------------------------------------------------------------\n"
+            "          0        |   Output header file directory   |  Project/src \n"
+            "  [1, INT_MAX - 1] |        Input source files        | my_thing.vert\n"
         );
         return 1;
     }
 
-// Open files:
-    FILE *f_header, *f_source;
+// Open header file:
+    FILE *f_header;
     {
-        const int path_len = strlen(argv[0]);
-        const bool end_is_slash = argv[0][path_len - 1] == '/';
+        #define dir argv[0]
+        const int dir_len = strlen(dir);
+        const bool end_is_slash = (dir[dir_len - 1] == '/');
 
-        char *path_manip = memcpy(malloc(sizeof(*path_manip) * (sizeof(BASE_NAME) + 1 + path_len - end_is_slash)), argv[0], path_len);
+        char *full_path_fname = memcpy(malloc(sizeof(*full_path_fname) * (sizeof(GENERATED_SHADER_FNAME) + dir_len - end_is_slash)), dir, dir_len);
 
-        memcpy(path_manip + path_len - end_is_slash, BASE_NAME "h", sizeof(BASE_NAME) + 1);
-        f_header = fopen(path_manip, "w");
+        memcpy(full_path_fname + dir_len - end_is_slash, GENERATED_SHADER_FNAME, sizeof(GENERATED_SHADER_FNAME));
 
-        path_manip[path_len + sizeof(BASE_NAME) - 1 - end_is_slash] = 'c';
+        f_header = fopen(full_path_fname, "w");
+        free(full_path_fname);
 
-        f_source = fopen(path_manip, "w");
-        free(path_manip);
-
-        if (!f_header || !f_source)
+        if (!f_header)
         {
-            puts("Bad generated header/source open.");
+            puts("Bad generated source open.");
             return 2;
         }
+        #undef dir
     }
 
-    // No longer need the second argument:
+    // No longer need the second (header dir) argument:
     --argc; ++argv;
 
     FILE **glsl_sources = 0;
     for (int i = 0; i < argc; ++i)
     {
-        glsl_sources = realloc(glsl_sources, sizeof(*glsl_sources) * i);
+        glsl_sources = realloc(glsl_sources, sizeof(*glsl_sources) * (i + 1));
 
         if (!(glsl_sources[i] = fopen(argv[i], "r")))
         {
@@ -98,15 +95,13 @@ int main(int argc, char **argv)
     }
 
 // Process input, generate files:
-    fputs("#ifndef " GENERATED_SHADERS_GUARD "//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY\n#define " GENERATED_SHADERS_GUARD "\ntypedef const char*const " STR_TYPEDEF_TNAME ";extern " STR_TYPEDEF_TNAME " ", f_header);
-    fputs("#include \"" GENERATED_SHADERS_NAME ".h\"//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY\n" STR_TYPEDEF_TNAME " ", f_source);
+    fputs("#ifndef " GENERATED_SHADER_GUARD "\n#define " GENERATED_SHADER_GUARD "\n//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\ntypedef const char*const " STR_TYPEDEF_TNAME ";static " STR_TYPEDEF_TNAME " ", f_header);
 
     // Create string variables:
     for (int i = 0; i < argc; ++i)
     {
         char delim = (i == argc - 1 ? ';' : ','); // Will be a comma between variables and a semicolon for the last variable.
-        fprintf(f_header, "%s%c", argv[i], delim);
-        fprintf(f_source, "%s=\"", argv[i]);
+        fprintf(f_header, "%s=\"", argv[i]);
 
         // Read code into string while removing redundancies, comments etc:
         char last = 0, next;
@@ -120,10 +115,10 @@ int main(int argc, char **argv)
                     // If last was space, overwrite space with newline:
                     if (last == ' ')
                     {
-                        fseek(f_source, -1, SEEK_CUR);
+                        fseek(f_header, -1, SEEK_CUR);
                     }
 
-                    fputs("\\n", f_source);
+                    fputs("\\n", f_header);
                 }
                 else
                 {
@@ -136,7 +131,7 @@ int main(int argc, char **argv)
                 if (next == '/' && last == '/')
                 {
                     // Undo '/' write from last loop:
-                    fseek(f_source, -1, SEEK_CUR);
+                    fseek(f_header, -1, SEEK_CUR);
                     writing = false;
                     continue;
                 }
@@ -153,23 +148,22 @@ int main(int argc, char **argv)
 
                 if (writing)
                 {
-                    fputc(next, f_source);
+                    fputc(next, f_header);
                 }
             }
 
             last = next;
         }
 
-        fprintf(f_source, "\"%c", delim);
+        fprintf(f_header, "\"%c", delim);
     }
 
-    fputs("\n", f_source);
     fputs("\n#endif\n", f_header);
 
 // Close files:
-    if (fclose(f_header) || fclose(f_source))
+    if (fclose(f_header))
     {
-        puts("Bad generated header/source close.");
+        puts("Bad generated header close.");
         return 4;
     }
 
@@ -182,9 +176,6 @@ int main(int argc, char **argv)
         }
     }
     free(glsl_sources);
-
-    // Comment out to remove warning:
-    puts("NOTE: DON'T FORGET TO INCLUDE \"" GENERATED_SHADERS_NAME ".h\" IN APPLICABLE SOURCE FILES!");
 
     return 0;
 }
