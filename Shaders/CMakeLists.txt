@@ -6,6 +6,7 @@ add_compile_definitions(CALCULATE_FPS)
 
 set(SRC
     main.c
+    gensh.c
 )
 
 include("../BASE_CMakeLists.cmake")

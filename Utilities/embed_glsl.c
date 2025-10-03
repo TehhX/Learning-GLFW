@@ -13,15 +13,15 @@ TODO:
 #include "stdbool.h"
 
 #ifndef GENERATED_SHADER_FNAME
-    #define GENERATED_SHADER_FNAME "/gensh.h" // The file name of the output shader .h file. Must start with path delimiter.
+    #define GENERATED_SHADER_FNAME "gensh" // The file name of the output shader files. This will generate gensh.[hc].
 #endif
 
 #ifndef GENERATED_SHADER_GUARD
-    #define GENERATED_SHADER_GUARD "__GENSH_H__" // The header guard definition.
+    #define GENERATED_SHADER_GUARD "GENSH_H" // The header guard definition.
 #endif
 
 #ifndef STR_TYPEDEF_TNAME
-    #define STR_TYPEDEF_TNAME "__genshstr" // The type name used in the header and source file.
+    #define STR_TYPEDEF_TNAME "__genshstr_t" // The type name used in the header and source file.
 #endif
 
 int main(int argc, char **argv)
@@ -41,24 +41,28 @@ int main(int argc, char **argv)
     }
 
 // Open header file:
-    FILE *f_header;
+    FILE *f_header, *f_source;
     {
         #define dir argv[0]
         const int dir_len = strlen(dir);
         const bool end_is_slash = (dir[dir_len - 1] == '/');
 
-        char *full_path_fname = memcpy(malloc(sizeof(*full_path_fname) * (sizeof(GENERATED_SHADER_FNAME) + dir_len - end_is_slash)), dir, dir_len);
+        #define BASE_NAME "/" GENERATED_SHADER_FNAME "."
+        char *fullpath = memcpy(malloc(sizeof(*fullpath) * (sizeof(BASE_NAME) + 1 + dir_len - end_is_slash)), dir, dir_len);
 
-        memcpy(full_path_fname + dir_len - end_is_slash, GENERATED_SHADER_FNAME, sizeof(GENERATED_SHADER_FNAME));
+        memcpy(fullpath + dir_len - end_is_slash, BASE_NAME "h", sizeof(BASE_NAME));
+        f_header = fopen(fullpath, "w");
 
-        f_header = fopen(full_path_fname, "w");
-        free(full_path_fname);
+        fullpath[dir_len + sizeof(BASE_NAME) - 1 - end_is_slash] = 'c';
+        f_source = fopen(fullpath, "w");
+        free(fullpath);
 
-        if (!f_header)
+        if (!f_header || !f_source)
         {
-            puts("Bad generated source open.");
+            puts("Bad generated header/source open.");
             return 2;
         }
+        #undef BASE_NAME
         #undef dir
     }
 
@@ -95,13 +99,15 @@ int main(int argc, char **argv)
     }
 
 // Process input, generate files:
-    fputs("#ifndef " GENERATED_SHADER_GUARD "\n#define " GENERATED_SHADER_GUARD "\n//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\ntypedef const char*const " STR_TYPEDEF_TNAME ";static " STR_TYPEDEF_TNAME " ", f_header);
+    fputs("#ifndef " GENERATED_SHADER_GUARD "\n#define " GENERATED_SHADER_GUARD "\n//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\ntypedef const char*const " STR_TYPEDEF_TNAME ";extern " STR_TYPEDEF_TNAME " ", f_header);
+    fputs("#include \"" GENERATED_SHADER_FNAME ".h\"\n//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\n" STR_TYPEDEF_TNAME " ", f_source);
 
     // Create string variables:
     for (int i = 0; i < argc; ++i)
     {
         char delim = (i == argc - 1 ? ';' : ','); // Will be a comma between variables and a semicolon for the last variable.
-        fprintf(f_header, "%s=\"", argv[i]);
+        fprintf(f_source, "%s=\"", argv[i]);
+        fprintf(f_header, "%s%c", argv[i], delim);
 
         // Read code into string while removing redundancies, comments etc:
         char last = 0, next;
@@ -115,10 +121,10 @@ int main(int argc, char **argv)
                     // If last was space, overwrite space with newline:
                     if (last == ' ')
                     {
-                        fseek(f_header, -1, SEEK_CUR);
+                        fseek(f_source, -1, SEEK_CUR);
                     }
 
-                    fputs("\\n", f_header);
+                    fputs("\\n", f_source);
                 }
                 else
                 {
@@ -131,7 +137,7 @@ int main(int argc, char **argv)
                 if (next == '/' && last == '/')
                 {
                     // Undo '/' write from last loop:
-                    fseek(f_header, -1, SEEK_CUR);
+                    fseek(f_source, -1, SEEK_CUR);
                     writing = false;
                     continue;
                 }
@@ -148,22 +154,22 @@ int main(int argc, char **argv)
 
                 if (writing)
                 {
-                    fputc(next, f_header);
+                    fputc(next, f_source);
                 }
             }
 
             last = next;
         }
 
-        fprintf(f_header, "\"%c", delim);
+        fprintf(f_source, "\"%c", delim);
     }
 
     fputs("\n#endif\n", f_header);
 
 // Close files:
-    if (fclose(f_header))
+    if (fclose(f_header) || fclose(f_source))
     {
-        puts("Bad generated header close.");
+        puts("Bad generated header/source close.");
         return 4;
     }
 
