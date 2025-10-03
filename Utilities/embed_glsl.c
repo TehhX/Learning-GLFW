@@ -47,13 +47,14 @@ int main(int argc, char **argv)
         const int dir_len = strlen(dir);
         const bool end_is_slash = (dir[dir_len - 1] == '/');
 
-        #define BASE_NAME "/" GENERATED_SHADER_FNAME "."
-        char *fullpath = memcpy(malloc(sizeof(*fullpath) * (sizeof(BASE_NAME) + 1 + dir_len - end_is_slash)), dir, dir_len);
+        #define BASE_NAME "/" GENERATED_SHADER_FNAME ".h"
+        char *fullpath = memcpy(malloc(sizeof(char) * (sizeof(BASE_NAME) + dir_len - end_is_slash)), dir, dir_len);
+        fullpath[sizeof(BASE_NAME) + dir_len - end_is_slash - 1] = 0;
 
-        memcpy(fullpath + dir_len - end_is_slash, BASE_NAME "h", sizeof(BASE_NAME));
+        memcpy(fullpath + dir_len - end_is_slash, BASE_NAME, sizeof(BASE_NAME) - 1);
         f_header = fopen(fullpath, "w");
-
-        fullpath[dir_len + sizeof(BASE_NAME) - 1 - end_is_slash] = 'c';
+        
+        fullpath[sizeof(BASE_NAME) + dir_len - 2 - end_is_slash] = 'c';
         f_source = fopen(fullpath, "w");
         free(fullpath);
 
