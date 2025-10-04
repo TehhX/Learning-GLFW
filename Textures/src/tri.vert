@@ -7,6 +7,11 @@ out vec2 tex;
 
 void main()
 {
-    gl_Position = vec4(ipos, 1);
+    // Testing single-line comments
+    gl_Position = vec4(ipos, 1);/*
+        Testing multi-line comments.
+        They work as such.
+            And so forth. // Single-line comments inside multi-line comments.
+    *//* Another comment! */
     tex = itex;
 }

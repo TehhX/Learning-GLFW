@@ -1,10 +1,7 @@
 /*
 EMBED GLSL
 ==========
-Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [35, 38] or run without args for help.
-
-TODO:
-    * Remove "/*" style comments from output.
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [32, 35] or run without args for help.
 */
 
 #include "stdio.h"
@@ -53,7 +50,7 @@ int main(int argc, char **argv)
 
         memcpy(fullpath + dir_len - end_is_slash, BASE_NAME, sizeof(BASE_NAME) - 1);
         f_header = fopen(fullpath, "w");
-        
+
         fullpath[sizeof(BASE_NAME) + dir_len - 2 - end_is_slash] = 'c';
         f_source = fopen(fullpath, "w");
         free(fullpath);
@@ -112,12 +109,15 @@ int main(int argc, char **argv)
 
         // Read code into string while removing redundancies, comments etc:
         char last = 0, next;
-        bool writing = true;
+        #define        WRITING 0 // Currently writing text.
+        #define SING_LINE_CMNT 1 // Currently eating a single-line comment.
+        #define MULT_LINE_CMNT 2 // Currently eating a (potentially) multi-line comment.
+        int status = WRITING;
         while ((next = fgetc(glsl_sources[i])) != EOF)
         {
             if (next == '\n' && last != '\n')
             {
-                if (writing)
+                if (status == WRITING)
                 {
                     // If last was space, overwrite space with newline:
                     if (last == ' ')
@@ -127,19 +127,32 @@ int main(int argc, char **argv)
 
                     fputs("\\n", f_source);
                 }
-                else
+                else if (status == SING_LINE_CMNT)
                 {
-                    writing = true;
+                    status = WRITING;
                 }
             }
             else if (next != '\n')
             {
-                // Comment syntax:
-                if (next == '/' && last == '/')
+                if (last == '/' && status == WRITING)
                 {
-                    // Undo '/' write from last loop:
-                    fseek(f_source, -1, SEEK_CUR);
-                    writing = false;
+                    if (next == '/')
+                    {
+                        fseek(f_source, -1, SEEK_CUR);
+                        status = SING_LINE_CMNT;
+                        continue;
+                    }
+                    else if (next == '*')
+                    {
+                        fseek(f_source, -1, SEEK_CUR);
+                        status = MULT_LINE_CMNT;
+                        continue;
+                    }
+                }
+
+                if (last == '*' && next == '/' && status == MULT_LINE_CMNT)
+                {
+                    status = WRITING;
                     continue;
                 }
 
@@ -153,7 +166,7 @@ int main(int argc, char **argv)
                     continue;
                 }
 
-                if (writing)
+                if (status == WRITING)
                 {
                     fputc(next, f_source);
                 }
@@ -161,6 +174,9 @@ int main(int argc, char **argv)
 
             last = next;
         }
+        #undef WRITING
+        #undef SING_LINE_CMNT
+        #undef MULT_LINE_CMNT
 
         fprintf(f_source, "\"%c", delim);
     }
