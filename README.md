@@ -1,8 +1,8 @@
 # Learning GLFW
-A repo to learn the GLFW library, alongside GLAD and OpenGL. Made to work crossplatform with Windows/Linux.
+A repo to learn the GLFW library, alongside GLAD, OpenGL and CGLM. Made to work crossplatform with Windows/Linux. MSVC is not currently supported, check.
 
 ## Repo Structure
-The root folder contains the gitignore, README, and license files, along with several folders which contain sub-projects and CMake files within them. All of the folders are their own application, completely seperate from one another, and teach a different thing in GLFW, e.g. EmptyWindow shows the most basic GLFW program, an empty window. It doesn't come with include/ or libs/. Read the below section for more info on third-party libraries etc.
+The root folder contains the gitignore, README, and license files, along with several folders which contain sub-projects and CMake files within them. All of the folders are their own application, completely seperate from one another, and teach a different thing in GLFW, e.g. EmptyWindow shows the most basic GLFW program, an empty window. It doesn't come with include/ or libs/. Read the below section for more info on third-party libraries etc. `lib-extension` is (usually) `.a` on Linux and `.lib` on windows for static libraries, and `.so` on Linux and `.dll` on Windows for shared/dynamic libraries.
 
 ## Installing nesessary files
 ### Before running any sub-project, make sure you have the following installed:
@@ -31,16 +31,16 @@ The root folder contains the gitignore, README, and license files, along with se
 |           khrplatform.h
 |
 +---libs
-        libglad.a
-        libglfw.a <if not using package manager>
-        libcglm.so
+        libglad.<OS specific lib-extension>
+        libglfw.<OS specific lib-extension> <if not using package manager>
+        libcglm.<OS specific lib-extension>
 ```
 
 ## Compiling Any Example With CMake
-Navigate to a subfolder e.g Shaders, run embed_glsl.c if there are any GLSL shader files (more info in [Shader Files](#shader-files)), build with cmake, and run.
+Navigate to a subfolder e.g Shaders, run `embed_glsl.c` if there are any GLSL shader files (more info in [Shader Files](#shader-files)), build with cmake, and run.
 
 ## Compiling Any Example with CMake in VSCode Specifically
-Add ""cmake.sourceDirectory": "<sub-project>"" to ".vscode/settings.json" where subproject is the path to the sub-project you want to compile e.g "/home/<user>/Learning-GLFW/EmptyWindow". From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
+Add `"cmake.sourceDirectory": "` `<SUB-PROJECT>` `"` to `.vscode/settings.json` where `SUB-PROJECT` is the path to the sub-project you want to compile e.g "/home/`user`/Learning-GLFW/EmptyWindow". From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
 
 ## Shader files
-Files like *.vert, *.glsl etc. must be translated into header/source files for any given sub-project which uses them. Use Utilities/embed_glsl.c to translate them into their files. Compile and run the executable without any arguments for help.
+Files like `*.vert`, `*.glsl` etc. must be translated into header/source files for any given sub-project which uses them. Use Utilities/embed_glsl.c to translate them into their files. Compile and run the executable without any arguments for help.
