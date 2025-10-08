@@ -35,25 +35,24 @@
 
 #include "stdio.h"
 
-#define TICK_LEN_MS 800 // Milliseconds per tick
+#define TICK_LEN_MS 800.0f // Milliseconds per tick
 
-#define   WIN_WIDTH 800 // Window width (pixels)
-#define  WIN_HEIGHT 800 // Window height (pixels)
+#define  AREA_WIDTH  40.0f // Width of play area (squares)
+#define AREA_HEIGHT  40.0f // Height of play area (squares)
 
-#define  AREA_WIDTH  40 // Width of play area (squares)
-#define AREA_HEIGHT  40 // Height of play area (squares)
+#define   WIN_WIDTH 800.0f // Window width (pixels)
+#define  WIN_HEIGHT 800.0f // Window height (pixels)
 
 typedef GLuint GLref; // OpenGL object reference (pointer-like).
 
 // Possible snake directions.
-typedef enum
+enum snake_dir
 {
-    up,
-    down,
-    left,
-    right
-}
-snake_dir;
+    sd_up,
+    sd_down,
+    sd_left,
+    sd_right
+};
 
 int main()
 {
@@ -83,10 +82,10 @@ int main()
 
     const GLfloat square_verts[] =
     {
-        -1, -1, 0,
-        -1, 1, 0,
-        1, 1, 0,
-        1, -1, 0
+        -1 / AREA_WIDTH, -1 / AREA_HEIGHT, 0, // BL
+        -1 / AREA_WIDTH, 1 / AREA_HEIGHT, 0, // TL
+        1 / AREA_WIDTH, 1 / AREA_HEIGHT, 0, // TR
+        1 / AREA_WIDTH, -1 / AREA_HEIGHT, 0 // BR
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(square_verts), square_verts, GL_STATIC_DRAW);
@@ -96,8 +95,8 @@ int main()
 
     const GLuint square_indices[] =
     {
-        0, 1, 2,
-        0, 2, 3
+        0, 1, 2, // TL
+        0, 2, 3 // BR
     };
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(square_indices), square_indices, GL_STATIC_DRAW);
@@ -126,10 +125,16 @@ int main()
 // Main loop:
     while (!glfwWindowShouldClose(window))
     {
+    // Prep
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawElements(GL_TRIANGLES, sizeof(square_indices) / sizeof(square_indices[0]), GL_UNSIGNED_INT, 0);
+    // Gameplay
+        static enum snake_dir snake_direction = sd_right;
 
+    // Drawing
+        glDrawElements(GL_TRIANGLES, sizeof(square_verts) / sizeof(square_verts[0]), GL_UNSIGNED_INT, 0);
+
+    // Display
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
