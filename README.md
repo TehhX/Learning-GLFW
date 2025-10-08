@@ -2,23 +2,28 @@
 A repo to learn the GLFW library, alongside GLAD and OpenGL. Made to work crossplatform with Windows/Linux.
 
 ## Repo Structure
-The root folder contains the gitignore, README, and license files, along with several folders that have their own projects and CMake files within them. All of the folders are their own application, completely seperate from one another, and teach a different thing in GLFW, e.g. EmptyWindow shows the most basic GLFW program, an empty window. It doesn't come with include/ or libs/. Read the below section for more info on third-party libraries etc.
+The root folder contains the gitignore, README, and license files, along with several folders which contain sub-projects and CMake files within them. All of the folders are their own application, completely seperate from one another, and teach a different thing in GLFW, e.g. EmptyWindow shows the most basic GLFW program, an empty window. It doesn't come with include/ or libs/. Read the below section for more info on third-party libraries etc.
 
 ## Installing nesessary files
-### Before running any project, make sure you have the following installed:
+### Before running any sub-project, make sure you have the following installed:
 * GLFW3 - Through a package manager or by placing the relevant files under folder as shown in the below tree
 * GLAD - By compiling a static library from their source and then placing the relevant files under this folder as shown in the below tree
 * STB_IMAGE - By placing it under this folder as shown in the below tree
+* CGLM - Download from [recp/cglm](https://github.com/recp/cglm). I used [ver. 0.9.6](https://github.com/recp/cglm/tree/v0.9.6) in all applicable sub-projects. If any issues arise, they may be caused by using a different version. Place as shown in below tree
 
 ### Include/libs tree:
 ```
 +---include
 |   |   stb_image.h
 |   |
+|   +---cglm
+|   |       cglm.h
+|   |       <rest of .h files and accompanying folders>
+|   |
 |   +---GLAD
 |   |       glad.h
 |   |
-|   +---GLFW
+|   +---GLFW <if not using package manager>
 |   |       glfw3.h
 |   |       glfw3native.h
 |   |
@@ -26,15 +31,16 @@ The root folder contains the gitignore, README, and license files, along with se
 |           khrplatform.h
 |
 +---libs
-        glad.a
-        libglfw3.a
+        libglad.a
+        libglfw.a <if not using package manager>
+        libcglm.so
 ```
 
 ## Compiling Any Example With CMake
 Navigate to a subfolder e.g Shaders, run embed_glsl.c if there are any GLSL shader files (more info in [Shader Files](#shader-files)), build with cmake, and run.
 
 ## Compiling Any Example with CMake in VSCode Specifically
-Open VSCode in an example folder, NOT the root folder. From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
+Add ""cmake.sourceDirectory": "<sub-project>"" to ".vscode/settings.json" where subproject is the path to the sub-project you want to compile e.g "/home/<user>/Learning-GLFW/EmptyWindow". From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
 
 ## Shader files
-Files like *.vert, *.glsl etc. must be translated into header/source files for any given project which uses them. Use Utilities/embed_glsl.c to translate them into their files. Compile and run the executable without any arguments for help.
+Files like *.vert, *.glsl etc. must be translated into header/source files for any given sub-project which uses them. Use Utilities/embed_glsl.c to translate them into their files. Compile and run the executable without any arguments for help.

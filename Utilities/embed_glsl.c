@@ -1,7 +1,7 @@
 /*
 EMBED GLSL
 ==========
-Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a project. Read lines [32, 35] or run without args for help.
+Reads files written in GLSL and transpiles(?) them to .h and .c files to be included in a sub-project. Read lines [32, 35] or run without args for help.
 */
 
 #include "stdio.h"
@@ -108,16 +108,19 @@ int main(int argc, char **argv)
         fprintf(f_header, "%s%c", argv[i], delim);
 
         // Read code into string while removing redundancies, comments etc:
+        enum status {
+            st_writing,
+            st_single_line_comment,
+            st_multi_line_comment
+        };
+
         char last = 0, next;
-        #define        WRITING 0 // Currently writing text.
-        #define SING_LINE_CMNT 1 // Currently eating a single-line comment.
-        #define MULT_LINE_CMNT 2 // Currently eating a (potentially) multi-line comment.
-        int status = WRITING;
+        enum status curr_status = st_writing;
         while ((next = fgetc(glsl_sources[i])) != EOF)
         {
             if (next == '\n' && last != '\n')
             {
-                if (status == WRITING)
+                if (curr_status == st_writing)
                 {
                     // If last was space, overwrite space with newline:
                     if (last == ' ')
@@ -127,32 +130,32 @@ int main(int argc, char **argv)
 
                     fputs("\\n", f_source);
                 }
-                else if (status == SING_LINE_CMNT)
+                else if (curr_status == st_single_line_comment)
                 {
-                    status = WRITING;
+                    curr_status = st_writing;
                 }
             }
             else if (next != '\n')
             {
-                if (last == '/' && status == WRITING)
+                if (last == '/' && curr_status == st_writing)
                 {
                     if (next == '/')
                     {
                         fseek(f_source, -1, SEEK_CUR);
-                        status = SING_LINE_CMNT;
+                        curr_status = st_single_line_comment;
                         continue;
                     }
                     else if (next == '*')
                     {
                         fseek(f_source, -1, SEEK_CUR);
-                        status = MULT_LINE_CMNT;
+                        curr_status = st_multi_line_comment;
                         continue;
                     }
                 }
 
-                if (last == '*' && next == '/' && status == MULT_LINE_CMNT)
+                if (last == '*' && next == '/' && curr_status == st_multi_line_comment)
                 {
-                    status = WRITING;
+                    curr_status = st_writing;
                     continue;
                 }
 
@@ -166,7 +169,7 @@ int main(int argc, char **argv)
                     continue;
                 }
 
-                if (status == WRITING)
+                if (curr_status == st_writing)
                 {
                     fputc(next, f_source);
                 }
@@ -174,9 +177,6 @@ int main(int argc, char **argv)
 
             last = next;
         }
-        #undef WRITING
-        #undef SING_LINE_CMNT
-        #undef MULT_LINE_CMNT
 
         fprintf(f_source, "\"%c", delim);
     }

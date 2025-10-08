@@ -1,3 +1,3 @@
 # Draw Rectangle
 
-This project draws a rectangle across the screen.
+This sub-project draws a rectangle across the screen.
