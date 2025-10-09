@@ -1,6 +1,6 @@
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
-#include "cglm/cglm.h"
+#include "cglm/call.h"
 
 #include "gensh.h"
 
@@ -17,7 +17,7 @@ int main()
 
     GLFWwindow *win = glfwCreateWindow(800, 800, "Transformations", 0, 0);
     glfwMakeContextCurrent(win);
-    glfwSwapInterval(6);
+    glfwSwapInterval(0);
 
     gladLoadGL();
     glClearColor(0.2, 0.2, 0.2, 1);
@@ -64,32 +64,42 @@ int main()
 
     glUseProgram(prog);
 
-#if 1 // Verbose with comments, right aligned (not required, just nicer to read)
+    // A one time transformation fully demonstrating related topics and usage can be found here in commit 72f7639. It has been changed to a constantly rotating triangle.
 
-                                                               mat4 matrix; // Declare and allocate a mat4 on the stack
-                                                 glm_mat4_identity(matrix); // Turn matrix into an identity matrix (diagonal 1's)
-                                            glm_mat4_print(matrix, stdout); // Print matrix to verify
+    // Get the uniform reference to transformation
+    GLref u_transformation = glGetUniformLocation(prog, "transformation");
 
-                                             vec3 vector = { 0.5, 0.5, 0 }; // Translation vector (X, Y, Z)
-                                            glm_vec3_print(vector, stdout); // Print vector to verfify
+    // Used to calculate delta time
+    double old_time = glfwGetTime();
 
-                                            glm_translated(matrix, vector); // Translate matrix by vector
-                                            glm_mat4_print(matrix, stdout); // Print matrix to verify
+    // The centroid is the center of the triangle. This simply calculates its X, Y, and Z (should be 1) from "tri". Formula from here: https://www.omnicalculator.com/math/centroid-of-a-triangle
+    vec3 tri_centroid =
+    {
+        (tri[0] + tri[5] + tri[10]) / 3.0f,
+        (tri[1] + tri[6] + tri[11]) / 3.0f,
+        (1 + 1 + 1) / 3.0f
+    };
 
-    GLref transform_uniform = glGetUniformLocation(prog, "transformation"); // Get reference to uniform variable "transformation" of "tri.vert"
-             glUniformMatrix4fv(transform_uniform, 1, GL_FALSE, matrix[0]); // Set uniform variable to matrix. Count 1, matrix[0] works.
+    // Print the centroid
+    printf("Centroid ");
+    glmc_vec3_print(tri_centroid, stdout);
 
-#else // Least lines, probably more performant, no verification
-
-    mat4 m = GLM_MAT4_IDENTITY_INIT;
-    glm_translated(m, (vec3){ 0.5, 0.5, 0 });
-    glUniformMatrix4fv(glGetUniformLocation(prog, "transformation"), 1, 0, *m);
-
-#endif
-
+    // Main loop
     while (!glfwWindowShouldClose(win))
     {
         glClear(GL_COLOR_BUFFER_BIT);
+
+        static mat4 matrix = GLM_MAT4_IDENTITY_INIT;
+
+        // (new_time - old_time) is the delta in time, and is used to ensure constant speed regardless of loop speed.
+        double new_time = glfwGetTime();
+
+        // Rotate matrix around Z axis (facing monitor) by time value around the centroid.
+        glmc_rotate_at(matrix, tri_centroid, (new_time - old_time) * 1, (vec3){ 0, 0, 1 });
+
+        old_time = new_time;
+
+        glUniformMatrix4fv(u_transformation, 1, GL_FALSE, *matrix);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
 

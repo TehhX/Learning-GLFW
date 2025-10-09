@@ -23,8 +23,8 @@ if (WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE $<CONFIG:Release>)
 endif()
 
-# Get root folder "Learning-GLFW":
-cmake_path(GET CMAKE_SOURCE_DIR PARENT_PATH ROOT)
+# Root folder (Assuming sub-project requiring step-out)
+set(ROOT ${PROJECT_SOURCE_DIR}/..)
 
 # Set include/libs directories:
 target_include_directories(${PROJECT_NAME} PRIVATE ${ROOT}/include/)
