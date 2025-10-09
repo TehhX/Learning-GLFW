@@ -31,4 +31,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${ROOT}/include/)
 target_link_directories(${PROJECT_NAME} PRIVATE ${ROOT}/libs/)
 
 # Link required libraries inside libs:
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw m cglm glad)
+target_link_libraries(${PROJECT_NAME} PUBLIC glfw cglm m glad)

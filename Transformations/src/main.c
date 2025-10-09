@@ -29,12 +29,13 @@ int main()
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+    // Centered around 0, 0, 1 as calculated on Desmos (https://www.desmos.com/calculator/d9cpyvblms)
     GLfloat tri[] =
     {
-    //   X   Y   R   G   B
-        -.5, -.5,  1,  0,  0,
-         0,  .5,  0,  1,  0,
-         .5, -.5,  0,  0,  1
+    //      X      Y   R   G   B
+        -0.57, -0.32,  1,  0,  0,
+        +0.00, +0.64,  0,  1,  0,
+        +0.57, -0.32,  0,  0,  1
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(tri), tri, GL_STATIC_DRAW);
@@ -67,22 +68,10 @@ int main()
     // A one time transformation fully demonstrating related topics and usage can be found here in commit 72f7639. It has been changed to a constantly rotating triangle.
 
     // Get the uniform reference to transformation
-    GLref u_transformation = glGetUniformLocation(prog, "transformation");
+    const GLref u_transformation = glGetUniformLocation(prog, "transformation");
 
     // Used to calculate delta time
     double old_time = glfwGetTime();
-
-    // The centroid is the center of the triangle. This simply calculates its X, Y, and Z (should be 1) from "tri". Formula from here: https://www.omnicalculator.com/math/centroid-of-a-triangle
-    vec3 tri_centroid =
-    {
-        (tri[0] + tri[5] + tri[10]) / 3.0f,
-        (tri[1] + tri[6] + tri[11]) / 3.0f,
-        (1 + 1 + 1) / 3.0f
-    };
-
-    // Print the centroid
-    printf("Centroid ");
-    glmc_vec3_print(tri_centroid, stdout);
 
     // Main loop
     while (!glfwWindowShouldClose(win))
@@ -95,7 +84,12 @@ int main()
         double new_time = glfwGetTime();
 
         // Rotate matrix around Z axis (facing monitor) by time value around the centroid.
-        glmc_rotate_at(matrix, tri_centroid, (new_time - old_time) * 1, (vec3){ 0, 0, 1 });
+        glmc_rotate(matrix, (new_time - old_time) * 1, (vec3){ 0, 0, 1 });
+
+    #if 0 // Print FPS and matrix each frame
+        printf("FPS: %10.2lf | ", 1 / (new_time - old_time));
+        glmc_mat4_print(matrix, stdout);
+    #endif
 
         old_time = new_time;
 
