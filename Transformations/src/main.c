@@ -32,9 +32,9 @@ int main()
     GLfloat tri[] =
     {
     //   X   Y   R   G   B
-        -1, -1,  1,  0,  0,
-         0,  1,  0,  1,  0,
-         1, -1,  0,  0,  1
+        -.5, -.5,  1,  0,  0,
+         0,  .5,  0,  1,  0,
+         .5, -.5,  0,  0,  1
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(tri), tri, GL_STATIC_DRAW);
@@ -63,6 +63,29 @@ int main()
     glDeleteShader(frag);
 
     glUseProgram(prog);
+
+#if 1 // Verbose with comments, right aligned (not required, just nicer to read)
+
+                                                               mat4 matrix; // Declare and allocate a mat4 on the stack
+                                                 glm_mat4_identity(matrix); // Turn matrix into an identity matrix (diagonal 1's)
+                                            glm_mat4_print(matrix, stdout); // Print matrix to verify
+
+                                             vec3 vector = { 0.5, 0.5, 0 }; // Translation vector (X, Y, Z)
+                                            glm_vec3_print(vector, stdout); // Print vector to verfify
+
+                                            glm_translated(matrix, vector); // Translate matrix by vector
+                                            glm_mat4_print(matrix, stdout); // Print matrix to verify
+
+    GLref transform_uniform = glGetUniformLocation(prog, "transformation"); // Get reference to uniform variable "transformation" of "tri.vert"
+             glUniformMatrix4fv(transform_uniform, 1, GL_FALSE, matrix[0]); // Set uniform variable to matrix. Count 1, matrix[0] works.
+
+#else // Least lines, probably more performant, no verification
+
+    mat4 m = GLM_MAT4_IDENTITY_INIT;
+    glm_translated(m, (vec3){ 0.5, 0.5, 0 });
+    glUniformMatrix4fv(glGetUniformLocation(prog, "transformation"), 1, 0, *m);
+
+#endif
 
     while (!glfwWindowShouldClose(win))
     {
