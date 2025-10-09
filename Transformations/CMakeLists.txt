@@ -3,6 +3,7 @@ project(Transformations LANGUAGES C VERSION 0.0.0)
 
 set(SRC
     main.c
+    gensh.c
 )
 
 include("../BASE_CMakeLists.cmake")
