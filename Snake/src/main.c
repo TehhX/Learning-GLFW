@@ -35,8 +35,9 @@
 #include "gensh.h"
 
 #include "limits.h"
+#include "stdio.h"
 
-#define TICK_LEN_MS 675 // Milliseconds per tick
+#define TICK_LEN_MS 150 // Milliseconds per tick
 
 #define  AREA_SIDE_LEN 40 // Width of play area (squares)
 
@@ -150,26 +151,49 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
     // Gameplay
-        // TODO: Player input here, outisde of delta condition
+        // TODO: Player input here, outisde of delta condition. Don't accept a direction of the same axis as current (up -/> up, up -/> down, up -> right etc.)
 
         const double new_time = glfwGetTime();
         if (new_time - old_time >= (TICK_LEN_MS / 1000.0f))
         {
+            // If player hits wall in any of the 4 directions, game over.
+            if (((ABSTOY(snake_locations[0]) <=                 0) && ( sd_down == sdir)) || // Hit bottom
+                ((ABSTOY(snake_locations[0]) >= AREA_SIDE_LEN - 1) && (   sd_up == sdir)) || // Hit top
+                ((ABSTOX(snake_locations[0]) <=                 0) && ( sd_left == sdir)) || // Hit left
+                ((ABSTOX(snake_locations[0]) >= AREA_SIDE_LEN - 1) && (sd_right == sdir))  ) // Hit right
+            {
+                // TODO: Implement game over due to hitting wall.
+                puts("Hit wall, game over.");
+            }
+
+            // New position based on user-input.
+            snake_locations[0] = XYTOABS(
+                ABSTOX(snake_locations[0]) + (sd_right == sdir) - (sd_left == sdir),
+                ABSTOY(snake_locations[0]) + (   sd_up == sdir) - (sd_down == sdir)
+            );
+
+            // Check if hitting self:
+            for (int i = 3; i < snake_len; ++i) // Impossible to hit master, master-sub, master-sub-sub or master-sub-sub-sub. Only possible on 4th pos and after (index = 3).
+            {
+                if (snake_locations[0] == snake_locations[i])
+                {
+                    // TODO: Implement game over due to hitting self.
+                    puts("Hit self, game over.");
+                }
+            }
+
+            // TODO: Check if hitting food, add a body-part
+
             for (int i = snake_len - 1; i >= 1; --i) // Move all parts to their leader
             {
                 snake_locations[i] = snake_locations[i - 1];
             }
 
-            snake_locations[0] = XYTOABS( // Move master part in the direction of input
-                ABSTOX(snake_locations[0]) + (sdir == sd_right) - (sdir == sd_left),
-                ABSTOY(snake_locations[0]) + (sdir == sd_up)    - (sdir == sd_down)
-            );
-
             old_time = new_time;
         }
 
     // Drawing
-
+        // Moves draw-square to each of snake_locations, draw, reset, repeat
         for (int i = 0; i < snake_len; ++i)
         {
             mat4 trans = GLM_MAT4_IDENTITY_INIT;
