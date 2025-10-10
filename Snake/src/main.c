@@ -37,7 +37,7 @@
 #include "limits.h"
 #include "stdio.h"
 
-#define TICK_LEN_S 0.4f // Seconds per tick
+#define TICK_LEN_S 0.175f // Seconds per tick
 
 #define  AREA_SIDE_LEN 40 // Width of play area (squares)
 
@@ -75,7 +75,7 @@ int main()
     gladLoadGL();
 
     glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
-    glClearColor(0, 0, 0, 0);
+    glClearColor(0.05, 0.05, 0.15, 1);
 
 // GPU setup:
     GLref vbo, ebo, vao;
@@ -143,7 +143,7 @@ int main()
     const GLref utrans = glGetUniformLocation(sprog, "trans");
     enum snake_dir sdir = sd_right;
 
-    double old_time = glfwGetTime();
+    double goal_time = glfwGetTime() + TICK_LEN_S;
     // Main loop:
     while (!glfwWindowShouldClose(window))
     {
@@ -151,10 +151,28 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
     // Gameplay
-        // TODO: Player input here, outisde of delta condition. Don't accept a direction of the same axis as current (up -/> up, up -/> down, up -> right etc.)
+        if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_UP)) && // W/Up
+            (sdir != sd_up && sdir != sd_down)) // Same-axis refusal
+        {
+            sdir = sd_up;
+        }
+        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_LEFT)) && // A/Left
+                 (sdir != sd_left && sdir != sd_right))
+        {
+            sdir = sd_left;
+        }
+        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_DOWN)) && // S/Down
+                 (sdir != sd_up && sdir != sd_down))
+        {
+            sdir = sd_down;
+        }
+        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_RIGHT)) && // D/Right
+                 (sdir != sd_left && sdir != sd_right))
+        {
+            sdir = sd_right;
+        }
 
-        const double new_time = glfwGetTime();
-        if (new_time - old_time >= TICK_LEN_S)
+        if (glfwGetTime() >= goal_time)
         {
             // If player hits wall in any of the 4 directions, game over.
             if (((ABSTOY(snake_locations[0]) <=                 0) && ( sd_down == sdir)) || // Hit bottom
@@ -164,6 +182,7 @@ int main()
             {
                 // TODO: Implement game over due to hitting wall.
                 puts("Hit wall, game over.");
+                exit(0);
             }
 
             // New position based on user-input.
@@ -179,17 +198,18 @@ int main()
                 {
                     // TODO: Implement game over due to hitting self.
                     puts("Hit self, game over.");
+                    exit(0);
                 }
             }
 
-            // TODO: Check if hitting food, add a body-part
+            // TODO: Check if hitting food, add a body-part, add new food.
 
             for (int i = snake_len - 1; i >= 1; --i) // Move all parts to their leader
             {
                 snake_locations[i] = snake_locations[i - 1];
             }
 
-            old_time += TICK_LEN_S;
+            goal_time += TICK_LEN_S;
         }
 
     // Drawing
