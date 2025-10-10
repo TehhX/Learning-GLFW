@@ -37,7 +37,7 @@
 #include "limits.h"
 #include "stdio.h"
 
-#define TICK_LEN_MS 150 // Milliseconds per tick
+#define TICK_LEN_S 0.4f // Seconds per tick
 
 #define  AREA_SIDE_LEN 40 // Width of play area (squares)
 
@@ -154,7 +154,7 @@ int main()
         // TODO: Player input here, outisde of delta condition. Don't accept a direction of the same axis as current (up -/> up, up -/> down, up -> right etc.)
 
         const double new_time = glfwGetTime();
-        if (new_time - old_time >= (TICK_LEN_MS / 1000.0f))
+        if (new_time - old_time >= TICK_LEN_S)
         {
             // If player hits wall in any of the 4 directions, game over.
             if (((ABSTOY(snake_locations[0]) <=                 0) && ( sd_down == sdir)) || // Hit bottom
@@ -189,7 +189,7 @@ int main()
                 snake_locations[i] = snake_locations[i - 1];
             }
 
-            old_time = new_time;
+            old_time += TICK_LEN_S;
         }
 
     // Drawing
