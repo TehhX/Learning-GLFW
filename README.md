@@ -43,4 +43,8 @@ Navigate to a subfolder e.g Shaders, run `embed_glsl.c` if there are any GLSL sh
 Add `"cmake.sourceDirectory": "` `<SUB-PROJECT>` `"` to `.vscode/settings.json` where `SUB-PROJECT` is the path to the sub-project you want to compile e.g "/home/`user`/Learning-GLFW/EmptyWindow". From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
 
 ## Shader files
-Files like `*.vert`, `*.glsl` etc. must be translated into header/source files for any given sub-project which uses them. Use Utilities/embed_glsl.c to translate them into their files. Compile and run the executable without any arguments for help.
+Files like `*.vert`, `*.glsl`, `*.frag` etc. must be translated into header/source files for any given sub-project which uses them. Use Utilities/embed_glsl.c to translate them into their files. Compile and run the executable without any arguments for help.
+
+## On The Topic of Windows (OS)
+* Windows (graphical element) will freeze when window (graphical element) events are triggered on Windows (OS), stopping *all* code execution on thread-0. This may be able to be solved by keeping all window (graphical element) functionality and GPU-communication on thread-0 where it needs to be, while moving background activity like calculations or translations to another thread
+* Windows (OS) requires the subsystem to be specified in CMake or during linking(?) to skip the launch of a new terminal window (graphical element) when launched outside of one
