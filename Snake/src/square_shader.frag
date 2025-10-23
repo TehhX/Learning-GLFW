@@ -2,7 +2,9 @@
 
 out vec4 color;
 
+uniform bool color_spec;
+
 void main()
 {
-    color = vec4(0, 1, 0, 1);
+    color = vec4(!color_spec, color_spec, 0, 1);
 }
