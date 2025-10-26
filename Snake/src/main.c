@@ -37,17 +37,20 @@ enum snake_dir
 void set_new_apple_location(int *const restrict apple_location, int *const restrict snake_locations, const int snake_len)
 {
     // Keep generating random locations for the apple until one is found which does not overlap the snake anywhere:
-    CHECK_APPLE_LOOP:
-    *apple_location = (rand() / (float) RAND_MAX) * (AREA_SIDE_LEN * AREA_SIDE_LEN);
+    do
     {
-        for (int i = 0; i < snake_len; ++i)
+        *apple_location = (rand() / (double) RAND_MAX) * (AREA_SIDE_LEN * AREA_SIDE_LEN);
         {
-            if (snake_locations[i] == *apple_location)
+            for (int i = 0; i < snake_len; ++i)
             {
-                goto CHECK_APPLE_LOOP;
+                if (snake_locations[i] == *apple_location)
+                {
+                    continue;
+                }
             }
         }
     }
+    while (0);
 
     snake_locations[snake_len] = snake_locations[snake_len - 1];
 }
@@ -132,8 +135,9 @@ int main()
     const GLref utrans = glGetUniformLocation(sprog, "trans");
     const GLref ucolor_spec = glGetUniformLocation(sprog, "color_spec");
 
-    // TODO: It's possible to turn around by pressing a perpendicular direction to current then backwards to current inbetween ticks. Change it to one sdir for current, and one for next/intended and recalculate on tick.
-    enum snake_dir sdir = sd_right;
+    enum snake_dir
+        sdir_actual = sd_right,
+        sdir_intended = sd_right;
 
     #define   ABSTOX(ABS) ((ABS) % AREA_SIDE_LEN)
     #define   ABSTOY(ABS) ((ABS) / AREA_SIDE_LEN)
@@ -160,31 +164,33 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
     // Gameplay
-        if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_UP)) && (sdir != sd_up && sdir != sd_down)) // W/Up
+        if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_UP)) && (sdir_actual != sd_up && sdir_actual != sd_down)) // W/Up
         {
-            sdir = sd_up;
+            sdir_intended = sd_up;
         }
-        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_LEFT)) && (sdir != sd_left && sdir != sd_right)) // A/Left
+        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_LEFT)) && (sdir_actual != sd_left && sdir_actual != sd_right)) // A/Left
         {
-            sdir = sd_left;
+            sdir_intended = sd_left;
         }
-        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_DOWN)) && (sdir != sd_up && sdir != sd_down)) // S/Down
+        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_DOWN)) && (sdir_actual != sd_up && sdir_actual != sd_down)) // S/Down
         {
-            sdir = sd_down;
+            sdir_intended = sd_down;
         }
-        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_RIGHT)) && (sdir != sd_left && sdir != sd_right)) // D/Right
+        else if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_RIGHT)) && (sdir_actual != sd_left && sdir_actual != sd_right)) // D/Right
         {
-            sdir = sd_right;
+            sdir_intended = sd_right;
         }
 
         // This block executes once per tick:
         if (glfwGetTime() >= goal_time)
         {
+            sdir_actual = sdir_intended;
+
             // If player hits wall in any of the 4 directions, game over.
-            if (((ABSTOY(snake_locations[0]) <=                 0) && ( sd_down == sdir)) || // Hit bottom
-                ((ABSTOY(snake_locations[0]) >= AREA_SIDE_LEN - 1) && (   sd_up == sdir)) || // Hit top
-                ((ABSTOX(snake_locations[0]) <=                 0) && ( sd_left == sdir)) || // Hit left
-                ((ABSTOX(snake_locations[0]) >= AREA_SIDE_LEN - 1) && (sd_right == sdir))  ) // Hit right
+            if (((ABSTOY(snake_locations[0]) <=                 0) && ( sd_down == sdir_actual)) || // Hit bottom
+                ((ABSTOY(snake_locations[0]) >= AREA_SIDE_LEN - 1) && (   sd_up == sdir_actual)) || // Hit top
+                ((ABSTOX(snake_locations[0]) <=                 0) && ( sd_left == sdir_actual)) || // Hit left
+                ((ABSTOX(snake_locations[0]) >= AREA_SIDE_LEN - 1) && (sd_right == sdir_actual))  ) // Hit right
             {
                 // TODO: Implement game over due to hitting wall.
                 puts("Hit wall, game over.");
@@ -193,8 +199,8 @@ int main()
 
             // New position based on user-input.
             snake_locations[0] = XYTOABS(
-                ABSTOX(snake_locations[0]) + (sd_right == sdir) - (sd_left == sdir),
-                ABSTOY(snake_locations[0]) + (   sd_up == sdir) - (sd_down == sdir)
+                ABSTOX(snake_locations[0]) + (sd_right == sdir_actual) - (sd_left == sdir_actual),
+                ABSTOY(snake_locations[0]) + (   sd_up == sdir_actual) - (sd_down == sdir_actual)
             );
 
             // Check if hitting self: (P.S: Impossible to hit master, master-sub, master-sub-sub or master-sub-sub-sub. Only possible on 4th pos and after (index = 3).)
@@ -224,7 +230,7 @@ int main()
 
     // Drawing
         // Snake
-        glUniform1i(ucolor_spec, 1);
+        glUniform1i(ucolor_spec, GL_TRUE);
         for (int i = 0; i < snake_len; ++i)
         {
             mat4 trans = GLM_MAT4_IDENTITY_INIT;
@@ -240,7 +246,7 @@ int main()
         }
 
         // Food
-        glUniform1i(ucolor_spec, 0);
+        glUniform1i(ucolor_spec, GL_FALSE);
         mat4 trans = GLM_MAT4_IDENTITY_INIT;
         glmc_translate(trans, (vec3)
         {
