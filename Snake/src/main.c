@@ -11,9 +11,9 @@
 
 #define PRINT_FPS 0 // Checks and prints FPS
 
-#define TICK_LEN_S 0.2f // Seconds per tick
+#define TICK_LEN_S 0.15f // Seconds per tick
 
-#define  AREA_SIDE_LEN 32 // Width and height of play area (squares)
+#define  AREA_SIDE_LEN 26 // Width and height of play area (squares)
 
 #if AREA_SIDE_LEN * AREA_SIDE_LEN > INT_MAX
     #error Play area too large for snake_len and snake_locations (Guaranteed integer overflow).
@@ -33,26 +33,24 @@ enum snake_dir
     sd_right
 };
 
-// TODO: First apple will not grow the snake. Debug statements show that snake_locations[1] is the same as snake_locations[0], but the rest follow snake_locations[1].
-void set_new_apple_location(int *const restrict apple_location, int *const restrict snake_locations, const int snake_len)
+/*
+TODO: Fix errors:
+    * Will loop forever when out of spaces
+    * Will theoretically take longer and longer the less spaces there are
+    * Potential solution: Go to apple_location = <random>, then loop through values until spot is free. Will have to check entirety of snake every rand, but better. When getting back to <random>, all spaces are filled and program can exit with full complete high score. */
+void set_new_apple_location(int *const restrict apple_location, const int *const restrict snake_locations, const int snake_len)
 {
-    // Keep generating random locations for the apple until one is found which does not overlap the snake anywhere:
-    do
+    SET_NEW_APPLE_GEN_NEW:
+    *apple_location = (rand() / (double) RAND_MAX) * (AREA_SIDE_LEN * AREA_SIDE_LEN);
     {
-        *apple_location = (rand() / (double) RAND_MAX) * (AREA_SIDE_LEN * AREA_SIDE_LEN);
+        for (int i = 0; i < snake_len; ++i)
         {
-            for (int i = 0; i < snake_len; ++i)
+            if (snake_locations[i] == *apple_location)
             {
-                if (snake_locations[i] == *apple_location)
-                {
-                    continue;
-                }
+                goto SET_NEW_APPLE_GEN_NEW;
             }
         }
     }
-    while (0);
-
-    snake_locations[snake_len] = snake_locations[snake_len - 1];
 }
 
 #if PRINT_FPS
@@ -164,6 +162,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
     // Gameplay
+        // TODO: Input at lower tick values feels buggy. Hovever, it may be a skill issue.
         if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W) || GLFW_PRESS == glfwGetKey(window, GLFW_KEY_UP)) && (sdir_actual != sd_up && sdir_actual != sd_down)) // W/Up
         {
             sdir_intended = sd_up;
@@ -197,11 +196,15 @@ int main()
                 exit(0);
             }
 
-            // New position based on user-input.
-            snake_locations[0] = XYTOABS(
+            const int new_head_loc = XYTOABS(
                 ABSTOX(snake_locations[0]) + (sd_right == sdir_actual) - (sd_left == sdir_actual),
                 ABSTOY(snake_locations[0]) + (   sd_up == sdir_actual) - (sd_down == sdir_actual)
             );
+
+            if (new_head_loc == apple_location)
+            {
+                set_new_apple_location(&apple_location, snake_locations, snake_len++);
+            }
 
             // Check if hitting self: (P.S: Impossible to hit master, master-sub, master-sub-sub or master-sub-sub-sub. Only possible on 4th pos and after (index = 3).)
             for (int i = 3; i < snake_len; ++i)
@@ -220,6 +223,8 @@ int main()
                 snake_locations[i] = snake_locations[i - 1];
             }
 
+            snake_locations[0] = new_head_loc;
+
             if (snake_locations[0] == apple_location)
             {
                 set_new_apple_location(&apple_location, snake_locations, snake_len++);
@@ -230,7 +235,7 @@ int main()
 
     // Drawing
         // Snake
-        glUniform1i(ucolor_spec, GL_TRUE);
+        glUniform1i(ucolor_spec, 1);
         for (int i = 0; i < snake_len; ++i)
         {
             mat4 trans = GLM_MAT4_IDENTITY_INIT;
@@ -246,7 +251,7 @@ int main()
         }
 
         // Food
-        glUniform1i(ucolor_spec, GL_FALSE);
+        glUniform1i(ucolor_spec, 0);
         mat4 trans = GLM_MAT4_IDENTITY_INIT;
         glmc_translate(trans, (vec3)
         {
