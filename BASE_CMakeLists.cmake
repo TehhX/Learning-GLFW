@@ -31,4 +31,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${ROOT}/include/)
 target_link_directories(${PROJECT_NAME} PRIVATE ${ROOT}/libs/)
 
 # Link required libraries inside libs:
+# TODO: Keep glfw and glad here, but move m and cglm into sub-lists only in sub-projects which require them.
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw cglm m glad)
