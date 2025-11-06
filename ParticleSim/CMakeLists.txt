@@ -8,3 +8,5 @@ set(SRC
 )
 
 include("../BASE_CMakeLists.cmake")
+
+target_link_libraries(ParticleSim PRIVATE m)
