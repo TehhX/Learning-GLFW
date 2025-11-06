@@ -6,10 +6,10 @@ The root folder contains the gitignore, README, and license files, along with se
 
 ## Installing nesessary files
 ### Before running any sub-project, make sure you have the following installed:
-* GLFW3 - Through a package manager or by placing the relevant files under folder as shown in the below tree
-* GLAD - By compiling a static library from their source and then placing the relevant files under this folder as shown in the below tree
-* STB_IMAGE - By placing it under this folder as shown in the below tree
-* CGLM - Download from [recp/cglm](https://github.com/recp/cglm). I used [ver. 0.9.6](https://github.com/recp/cglm/tree/v0.9.6) in all applicable sub-projects. If any issues arise, they may be caused by using a different version. Place as shown in below tree
+* GLFW3 - Through a package manager or by placing the relevant files under folder as shown in the below tree.
+* GLAD - By compiling a static library from their source and then placing the relevant files under this folder as shown in the below tree.
+* STB_IMAGE - By placing it under this folder as shown in the below tree.
+* CGLM - Download from [recp/cglm](https://github.com/recp/cglm). I used [ver. 0.9.6](https://github.com/recp/cglm/tree/v0.9.6) in all applicable sub-projects. If any issues arise, they may be caused by using a different version. Place as shown in below tree.
 
 ### Include/libs tree:
 ```
@@ -40,7 +40,7 @@ The root folder contains the gitignore, README, and license files, along with se
 Navigate to a subfolder e.g Shaders, run `embed_glsl.c` if there are any GLSL shader files (more info in [Shader Files](#shader-files)), build with cmake, and run.
 
 ## Compiling Any Example with CMake in VSCode Specifically
-Add `"cmake.sourceDirectory": "` `<SUB-PROJECT>` `"` to `.vscode/settings.json` where `SUB-PROJECT` is the path to the sub-project you want to compile e.g "/home/`user`/Learning-GLFW/EmptyWindow". From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
+Add `"cmake.sourceDirectory": "<SUB-PROJECT>"` to `.vscode/settings.json` where `<SUB-PROJECT>` is the path to the sub-project you want to compile e.g `"/home/<USER>/Learning-GLFW/EmptyWindow"`. From there, so long as the CMakeTools extension is installed, use the build, debug and run buttons along the bottom toolbar to run the program.
 
 ## Shader files
 Files like `*.vert`, `*.glsl`, `*.frag` etc. must be translated into header/source files for any given sub-project which uses them. Use Utilities/embed_glsl.c to translate them into their files. Compile and run the executable without any arguments for help.
