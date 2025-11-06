@@ -14,10 +14,10 @@
 
 #define ORIGIN_X -0.2 // Center of the circle (X)
 #define ORIGIN_Y 0.2 // Center of the circle (Y)
-#define RADIUS 0.8 // How large the circle is in relation to the window [0, 1].
+#define RADIUS 0.1 // How large the circle is in relation to the window [0, 1].
 
-#define CIRCLE_VERT_COUNT 128 // Amount of outer vertices in the circle, one at the origin will always exist in addition.
-#define DRAW_TYPE 0 // Either 1 for fill or 0 for wireframe
+#define CIRCLE_VERT_COUNT 22 // Amount of outer vertices in the circle, one at the origin will always exist in addition.
+#define DRAW_TYPE 1 // Either 1 for fill or 0 for wireframe
 #define DRAW_INDIVIDUAL -1 // -1 for all, otherwise [0, CIRCLE_VERT_COUNT)
 
 typedef GLuint GLref;
@@ -99,35 +99,30 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, (void *) 0);
     glEnableVertexAttribArray(0);
 
-    GLref shader_prog = glCreateProgram();
-    {
-        GLref
-            v_shader = glCreateShader(GL_VERTEX_SHADER),
-            f_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    GLref
+        shader_prog = glCreateProgram(),
+        v_shader = glCreateShader(GL_VERTEX_SHADER),
+        f_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-        const char vert_src[] = "#version 330 core\nlayout (location=0) in vec2 layout_locs;void main(){gl_Position=vec4(layout_locs,0,1);}";
-        const char *const vert_src_ptr = &vert_src[0];
+    const char vert_src[] = "#version 330 core\nlayout (location=0) in vec2 layout_locs;void main(){gl_Position=vec4(layout_locs,0,1);}";
+    const char frag_src[] = "#version 330 core\nout vec4 col;void main(){col = vec4(0.8, 0.8, 0.8, 1);}";
 
-        const char frag_src[] = "#version 330 core\nout vec4 col;void main(){col = vec4(0.8, 0.8, 0.8, 1);}";
-        const char *const frag_src_ptr = &frag_src[0];
+    glShaderSource(v_shader, 1, &(const char *){ vert_src }, NULL);
+    glShaderSource(f_shader, 1, &(const char *){ frag_src }, NULL);
 
-        glShaderSource(v_shader, 1, &vert_src_ptr, NULL);
-        glShaderSource(f_shader, 1, &frag_src_ptr, NULL);
+    glCompileShader(v_shader);
+    glCompileShader(f_shader);
 
-        glCompileShader(v_shader);
-        glCompileShader(f_shader);
+    glAttachShader(shader_prog, v_shader);
+    glAttachShader(shader_prog, f_shader);
 
-        glAttachShader(shader_prog, v_shader);
-        glAttachShader(shader_prog, f_shader);
+    glLinkProgram(shader_prog);
 
-        glLinkProgram(shader_prog);
+    glDetachShader(shader_prog, v_shader);
+    glDetachShader(shader_prog, f_shader);
 
-        glDetachShader(shader_prog, v_shader);
-        glDetachShader(shader_prog, f_shader);
-
-        glDeleteShader(v_shader);
-        glDeleteShader(f_shader);
-    }
+    glDeleteShader(v_shader);
+    glDeleteShader(f_shader);
 
     glUseProgram(shader_prog);
 
