@@ -14,14 +14,15 @@
 #define PART_COUNT 1
 #define PART_RADIUS 0.025
 #define PART_VERTS 11
-#define INIT_SPD_MIN 0.0
-#define INIT_SPD_MAX 1.0
+#define INIT_VEL_MIN 0.2
+#define INIT_VEL_MAX 0.4
 
 // Helper definitions:
 typedef GLuint GLref;
-#define X 0
-#define Y 1
-#define SHAD_SRC(CONTENT) (&(const char *const){ (const char[]){ CONTENT } })
+#define X 0 // X index of float[2]'s.
+#define Y 1 // Y index of float[2]'s.
+#define glShaderSourceSingle(SHADER, CONTENT) glShaderSource(SHADER, 1, &(const char *const){ (const char[]){ CONTENT } }, NULL)
+#define frand(MIN, MAX) (rand() / (float) RAND_MAX * (MAX - MIN) + MIN)
 
 int main()
 {
@@ -59,20 +60,20 @@ int main()
     glViewport(0, 0, WIN_SX, WIN_SY);
     glClearColor(0.1, 0.1, 0.1, 1.0);
 
+    srand(time(NULL));
+
     float particle_pos[PART_COUNT][2];
     for (int i = 0; i < PART_COUNT; ++i)
     {
-        // TODO: Randomize starting positions in range [-1 + radius, 1 - radius].
-        particle_pos[i][X] = 0;
-        particle_pos[i][Y] = 0;
+        particle_pos[i][X] = frand(-1 + PART_RADIUS, 1 - PART_RADIUS);
+        particle_pos[i][Y] = frand(-1 + PART_RADIUS, 1 - PART_RADIUS);
     }
 
     float particle_vel[PART_COUNT][2];
     for (int i = 0; i < PART_COUNT; ++i)
     {
-        // TODO: Randomize velocities, between very slow and cross-screen in a few hundred ms.
-        particle_vel[i][X] = 0.12;
-        particle_vel[i][Y] = 0.2;
+        particle_vel[i][X] = frand(INIT_VEL_MIN, INIT_VEL_MAX);
+        particle_vel[i][Y] = frand(INIT_VEL_MIN, INIT_VEL_MAX);
     }
 
     GLref vbo, vao, ebo;
@@ -115,8 +116,8 @@ int main()
         vertex = glCreateShader(GL_VERTEX_SHADER),
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
-    glShaderSource(vertex, 1, SHAD_SRC("#version 330 core\nlayout (location = 0) in vec2 circle_verts; uniform vec2 particle_pos; void main(){ gl_Position = vec4(circle_verts.x + particle_pos.x, circle_verts.y + particle_pos.y, 0, 1); }"), NULL);
-    glShaderSource(fragment, 1, SHAD_SRC("#version 330 core\nout vec4 col; void main(){ col = vec4(1, 0, 0, 1); }"), NULL);
+    glShaderSourceSingle(vertex, "#version 330 core\nlayout (location = 0) in vec2 circle_verts; uniform vec2 particle_pos; void main(){ gl_Position = vec4(circle_verts.x + particle_pos.x, circle_verts.y + particle_pos.y, 0, 1); }");
+    glShaderSourceSingle(fragment, "#version 330 core\nout vec4 col; void main(){ col = vec4(1, 0, 0, 1); }");
 
     glCompileShader(vertex);
     glCompileShader(fragment);
@@ -151,6 +152,31 @@ int main()
             particle_pos[i][X] += particle_vel[i][X] * delta_ms;
             particle_pos[i][Y] += particle_vel[i][Y] * delta_ms;
 
+            // Solve wall collisions:
+            // TODO: Consider particle radius in both detection and solving.
+            if (particle_pos[i][X] > 1)
+            {
+                particle_pos[i][X] = 1 - (particle_pos[i][X] - 1);
+                particle_vel[i][X] *= -1;
+            }
+            else if (particle_pos[i][X] < -1)
+            {
+                particle_pos[i][X] = -1 + (-1 - particle_pos[i][X]);
+                particle_vel[i][X] *= -1;
+            }
+
+            if (particle_pos[i][Y] > 1)
+            {
+                particle_pos[i][Y] = 1 - (particle_pos[i][Y] - 1);
+                particle_vel[i][Y] *= -1;
+            }
+            else if (particle_pos[i][Y] < -1)
+            {
+                particle_pos[i][Y] = -1 + (-1 - particle_pos[i][Y]);
+                particle_vel[i][Y] *= -1;
+            }
+
+            // Change uniform particle pos, draw:
             glUniform2f(ufrm_particle_pos, particle_pos[i][X], particle_pos[i][Y]);
             glDrawElements(GL_TRIANGLES, sizeof(circle_indices) / sizeof(unsigned int), GL_UNSIGNED_INT, (void *) 0);
         }
