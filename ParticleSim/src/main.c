@@ -9,13 +9,13 @@
 #include "math.h"
 
 // Customizable definitions:
-#define WIN_SX 800
-#define WIN_SY 800
-#define PART_COUNT 1
-#define PART_RADIUS 0.025
-#define PART_VERTS 11
-#define INIT_VEL_MIN 0.2
-#define INIT_VEL_MAX 0.4
+#define WIN_SX 900
+#define WIN_SY 900
+#define PART_COUNT 2500
+#define PART_RADIUS 0.01
+#define PART_VERTS 16
+#define INIT_VEL_MIN -0.7
+#define INIT_VEL_MAX +0.7
 
 // Helper definitions:
 typedef GLuint GLref;
@@ -138,12 +138,11 @@ int main()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    float last_time = glfwGetTime();
+    glfwSetTime(0);
     while (glfwWindowShouldClose(main_window) == GLFW_FALSE)
     {
-        const float curr_time = glfwGetTime();
-        float delta_ms = curr_time - last_time;
-        last_time = curr_time;
+        const float delta_ms = glfwGetTime();
+        glfwSetTime(0);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
