@@ -11,11 +11,11 @@
 // Customizable definitions:
 #define WIN_SX 900
 #define WIN_SY 900
-#define PART_COUNT 2500
-#define PART_RADIUS 0.01
+#define PART_COUNT 10
+#define PART_RADIUS 0.1
 #define PART_VERTS 16
-#define INIT_VEL_MIN -0.7
-#define INIT_VEL_MAX +0.7
+#define INIT_VEL_MIN -0.35
+#define INIT_VEL_MAX +0.35
 
 // Helper definitions:
 typedef GLuint GLref;
@@ -152,28 +152,29 @@ int main()
             particle_pos[i][Y] += particle_vel[i][Y] * delta_ms;
 
             // Solve wall collisions:
-            // TODO: Consider particle radius in both detection and solving.
-            if (particle_pos[i][X] > 1)
+            if (particle_pos[i][X] + PART_RADIUS > 1)
             {
-                particle_pos[i][X] = 1 - (particle_pos[i][X] - 1);
+                particle_pos[i][X] = 1 - (particle_pos[i][X] - 1) - 2 * PART_RADIUS;
                 particle_vel[i][X] *= -1;
             }
-            else if (particle_pos[i][X] < -1)
+            else if (particle_pos[i][X] - PART_RADIUS < -1)
             {
-                particle_pos[i][X] = -1 + (-1 - particle_pos[i][X]);
+                particle_pos[i][X] = -1 + (-1 - particle_pos[i][X]) + 2 * PART_RADIUS;
                 particle_vel[i][X] *= -1;
             }
 
-            if (particle_pos[i][Y] > 1)
+            if (particle_pos[i][Y] + PART_RADIUS > 1)
             {
-                particle_pos[i][Y] = 1 - (particle_pos[i][Y] - 1);
+                particle_pos[i][Y] = 1 - (particle_pos[i][Y] - 1) - 2 * PART_RADIUS;
                 particle_vel[i][Y] *= -1;
             }
-            else if (particle_pos[i][Y] < -1)
+            else if (particle_pos[i][Y] - PART_RADIUS < -1)
             {
-                particle_pos[i][Y] = -1 + (-1 - particle_pos[i][Y]);
+                particle_pos[i][Y] = -1 + (-1 - particle_pos[i][Y]) + 2 * PART_RADIUS;
                 particle_vel[i][Y] *= -1;
             }
+
+            // TODO: Solve inter-particle collisions.
 
             // Change uniform particle pos, draw:
             glUniform2f(ufrm_particle_pos, particle_pos[i][X], particle_pos[i][Y]);
