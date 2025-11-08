@@ -2,6 +2,9 @@
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
 
+// CGLM:
+#include "cglm/vec2.h"
+
 // STD:
 #include "time.h"
 #include "stdlib.h"
@@ -11,17 +14,19 @@
 // Customizable definitions:
 #define WIN_SX 900
 #define WIN_SY 900
-#define PART_COUNT 10
+#define PART_COUNT 2
 #define PART_RADIUS 0.1
 #define PART_VERTS 16
-#define INIT_VEL_MIN -0.35
-#define INIT_VEL_MAX +0.35
+#define INIT_VEL_MIN -0.5
+#define INIT_VEL_MAX +0.5
 
 // Helper definitions:
-typedef GLuint GLref;
+typedef GLuint GLref; // Reference to GL component e.g. shader.
+typedef GLint GLufrm; // Reference to uniform location.
+#define PART_MASS (PART_RADIUS * PART_RADIUS * M_PI) // pi*r^2
 #define X 0 // X index of float[2]'s.
 #define Y 1 // Y index of float[2]'s.
-#define glShaderSourceSingle(SHADER, CONTENT) glShaderSource(SHADER, 1, &(const char *const){ (const char[]){ CONTENT } }, NULL)
+#define glShaderSourceSingle(SHADER, CONTENT) glShaderSource(SHADER, 1, &(const char *const){ (const char[]){ CONTENT } }, NULL) // Needs const pointer to const char const pointer, strange syntax required for one-liner macro.
 #define frand(MIN, MAX) (rand() / (float) RAND_MAX * (MAX - MIN) + MIN)
 
 int main()
@@ -62,14 +67,14 @@ int main()
 
     srand(time(NULL));
 
-    float particle_pos[PART_COUNT][2];
+    vec2 particle_pos[PART_COUNT];
     for (int i = 0; i < PART_COUNT; ++i)
     {
         particle_pos[i][X] = frand(-1 + PART_RADIUS, 1 - PART_RADIUS);
         particle_pos[i][Y] = frand(-1 + PART_RADIUS, 1 - PART_RADIUS);
     }
 
-    float particle_vel[PART_COUNT][2];
+    vec2 particle_vel[PART_COUNT];
     for (int i = 0; i < PART_COUNT; ++i)
     {
         particle_vel[i][X] = frand(INIT_VEL_MIN, INIT_VEL_MAX);
@@ -85,9 +90,9 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-    float circle_verts[PART_VERTS + 1][2];
-    circle_verts[0][X] = 0;
-    circle_verts[0][Y] = 0;
+    vec2 circle_verts[PART_VERTS + 1];
+        circle_verts[0][X] = 0;
+        circle_verts[0][Y] = 0;
     for (int i = 1; i < PART_VERTS + 1; ++i)
     {
         circle_verts[i][X] = PART_RADIUS * cosf(i * 2 * M_PI / PART_VERTS);
@@ -98,7 +103,7 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void *) 0);
     glEnableVertexAttribArray(0);
 
-    unsigned int circle_indices[PART_VERTS][3];
+    GLuint circle_indices[PART_VERTS][3];
     for (int i = 0; i < PART_VERTS - 1; ++i)
     {
         circle_indices[i][0] = 0;
@@ -134,7 +139,7 @@ int main()
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 
-    GLint ufrm_particle_pos = glGetUniformLocation(program, "particle_pos");
+    GLufrm ufrm_particle_pos = glGetUniformLocation(program, "particle_pos");
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -175,6 +180,20 @@ int main()
             }
 
             // TODO: Solve inter-particle collisions.
+            for (int j = 0; j < PART_COUNT; ++j)
+            {
+                if (i != j && glm_vec2_distance(particle_pos[i], particle_pos[j]) < PART_RADIUS * 2.0)
+                {
+                    /*
+                        Solve for elastic collision between two particles in two dimensions (Assume all logical statements below are true):
+                            * Their mass is both PART_MASS, but due to potential future changes their masses will be treated as different vars
+                            * Pi == Pf
+                            * |v0i| + |v1i| == |v0f| + |v1f|
+                            * Mass will dictate which particle is more affected by the collision
+                            * P == mv
+                    */
+                }
+            }
 
             // Change uniform particle pos, draw:
             glUniform2f(ufrm_particle_pos, particle_pos[i][X], particle_pos[i][Y]);
