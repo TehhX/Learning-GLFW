@@ -12,21 +12,20 @@
 #include "math.h"
 
 // Customizable definitions:
-#define WIN_SX 900
-#define WIN_SY 900
-#define PART_COUNT 2
-#define PART_RADIUS 0.1
-#define PART_VERTS 16
-#define INIT_VEL_MIN -0.5
-#define INIT_VEL_MAX +0.5
+#define WIN_SIDELEN 1000
+#define PART_COUNT 2000
+#define PART_RADIUS 0.005
+#define PART_VERTS 8
+#define INIT_VEL_MIN -.4
+#define INIT_VEL_MAX 0.4
 
 // Helper definitions:
 typedef GLuint GLref; // Reference to GL component e.g. shader.
 typedef GLint GLufrm; // Reference to uniform location.
-#define PART_MASS (PART_RADIUS * PART_RADIUS * M_PI) // pi*r^2
+#define PART_MASS (PART_RADIUS * PART_RADIUS) // r^2, pi not required as it is common across all masses and changes no calculations
 #define X 0 // X index of float[2]'s.
 #define Y 1 // Y index of float[2]'s.
-#define glShaderSourceSingle(SHADER, CONTENT) glShaderSource(SHADER, 1, &(const char *const){ (const char[]){ CONTENT } }, NULL) // Needs const pointer to const char const pointer, strange syntax required for one-liner macro.
+#define glShaderSourceSingle(SHADER, CONTENT) glShaderSource(SHADER, 1, &(const char *const){ CONTENT }, NULL)
 #define frand(MIN, MAX) (rand() / (float) RAND_MAX * (MAX - MIN) + MIN)
 
 int main()
@@ -42,7 +41,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    GLFWwindow *main_window = glfwCreateWindow(WIN_SX, WIN_SY, "Particle Simulator", NULL, NULL);
+    GLFWwindow *const main_window = glfwCreateWindow(WIN_SIDELEN, WIN_SIDELEN, "Particle Simulator", NULL, NULL);
     if (main_window == NULL)
     {
         puts("Could not create GLFWwindow.");
@@ -62,7 +61,9 @@ int main()
         return 1;
     }
 
-    glViewport(0, 0, WIN_SX, WIN_SY);
+    glfwSwapInterval(0);
+
+    glViewport(0, 0, WIN_SIDELEN, WIN_SIDELEN);
     glClearColor(0.1, 0.1, 0.1, 1.0);
 
     srand(time(NULL));
@@ -95,8 +96,8 @@ int main()
         circle_verts[0][Y] = 0;
     for (int i = 1; i < PART_VERTS + 1; ++i)
     {
-        circle_verts[i][X] = PART_RADIUS * cosf(i * 2 * M_PI / PART_VERTS);
-        circle_verts[i][Y] = PART_RADIUS * sinf(i * 2 * M_PI / PART_VERTS);
+        circle_verts[i][X] = PART_RADIUS * cosf(i * 2 * GLM_PI / PART_VERTS);
+        circle_verts[i][Y] = PART_RADIUS * sinf(i * 2 * GLM_PI / PART_VERTS);
     }
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(circle_verts), circle_verts, GL_STATIC_DRAW);
@@ -122,7 +123,7 @@ int main()
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
     glShaderSourceSingle(vertex, "#version 330 core\nlayout (location = 0) in vec2 circle_verts; uniform vec2 particle_pos; void main(){ gl_Position = vec4(circle_verts.x + particle_pos.x, circle_verts.y + particle_pos.y, 0, 1); }");
-    glShaderSourceSingle(fragment, "#version 330 core\nout vec4 col; void main(){ col = vec4(1, 0, 0, 1); }");
+    glShaderSourceSingle(fragment, "#version 330 core\nvoid main(){ gl_FragColor = vec4(1, 0, 0, 1); }");
 
     glCompileShader(vertex);
     glCompileShader(fragment);
@@ -139,7 +140,7 @@ int main()
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 
-    GLufrm ufrm_particle_pos = glGetUniformLocation(program, "particle_pos");
+    const GLufrm ufrm_particle_pos = glGetUniformLocation(program, "particle_pos");
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -148,6 +149,7 @@ int main()
     {
         const float delta_ms = glfwGetTime();
         glfwSetTime(0);
+        printf("FPS: %6.2f\n", 1 / delta_ms);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -179,18 +181,15 @@ int main()
                 particle_vel[i][Y] *= -1;
             }
 
-            // TODO: Solve inter-particle collisions.
-            for (int j = 0; j < PART_COUNT; ++j)
+            for (int j = i + 1; j < PART_COUNT; ++j)
             {
-                if (i != j && glm_vec2_distance(particle_pos[i], particle_pos[j]) < PART_RADIUS * 2.0)
+                if (glm_vec2_distance(particle_pos[i], particle_pos[j]) < PART_RADIUS * 2.0)
                 {
                     /*
-                        Solve for elastic collision between two particles in two dimensions (Assume all logical statements below are true):
-                            * Their mass is both PART_MASS, but due to potential future changes their masses will be treated as different vars
-                            * Pi == Pf
-                            * |v0i| + |v1i| == |v0f| + |v1f|
-                            * Mass will dictate which particle is more affected by the collision
-                            * P == mv
+                        TODO: Solve for elastic collision between two particles in two dimensions (Assume all logical statements below are true):
+                            * Pt0 == Pt1
+                            * Ek0 == Ek1
+                            * Glancing blows will impart force more in one axis than the other considering that the particles have radii and are not just points
                     */
                 }
             }
