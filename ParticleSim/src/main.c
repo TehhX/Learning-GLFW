@@ -180,7 +180,7 @@ int main()
         const float delta_ms = glfwGetTime();
         glfwSetTime(0);
 
-        // printf("FPS: %6.2f\n", 1 / delta_ms); // Print FPS if uncommented.
+        // printf("FPS: %6.2f\n", 1 / delta_ms);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -189,7 +189,12 @@ int main()
             particle_pos[i][X] += particle_vel[i][X] * delta_ms;
             particle_pos[i][Y] += particle_vel[i][Y] * delta_ms;
 
-            mat2 radius_scaler_matrix = { { particle_rad[i], 0.0f }, { 0.0f, particle_rad[i] } };
+            // Essentially a 2x2 identity matrix scaled by the particle radius.
+            const mat2 radius_scaler_matrix = {
+                { particle_rad[i], 0.0f },
+                { 0.0f, particle_rad[i] }
+            };
+
             glUniformMatrix2fv(Umat2_radius_scaler, 1, GL_FALSE, *radius_scaler_matrix);
 
             if (particle_pos[i][X] + particle_rad[i] > 1)
