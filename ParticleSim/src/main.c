@@ -4,7 +4,6 @@
 
 // CGLM:
 #include "cglm/vec2.h"
-#include "cglm/mat2.h"
 
 // STD:
 #include "time.h"
@@ -25,25 +24,27 @@
 
 // Helper definitions:
 typedef GLuint GLref; // Reference to GL component e.g. shader.
-typedef GLint GLufrm; // Reference to uniform location.
+typedef GLint GLu1f; // Location of uniform float
+typedef GLint GLu2f; // Location of uniform float[2] a.k.a. vec2
 #define particle_mass(INDEX) (particle_rad[INDEX] * particle_rad[INDEX]) // r^2, pi not required as it is common across all masses and changes no calculations. // TODO: Make individual.
 #define X 0 // X index of float[2]'s.
 #define Y 1 // Y index of float[2]'s.
+#define PSIM_INLINE __attribute__((always_inline)) static inline
 
 // Bypasses requirement for strange syntax.
-__attribute__((always_inline)) static inline void gl_shsrc_single(GLref shader, const char *const src)
+PSIM_INLINE void gl_shsrc_single(GLref shader, const char *const src)
 {
     glShaderSource(shader, 1, &src, NULL);
 }
 
 // Returns a random float between min and max.
-__attribute__((always_inline)) static inline float frand(float min, float max)
+PSIM_INLINE float frand(float min, float max)
 {
     return rand() / (float) RAND_MAX * (max - min) + min;
 }
 
 // Returns true or false randomly.
-__attribute__((always_inline)) static inline bool brand()
+PSIM_INLINE bool brand()
 {
     return rand() & 1;
 }
@@ -149,7 +150,7 @@ int main()
         vertex = glCreateShader(GL_VERTEX_SHADER),
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
-    gl_shsrc_single(vertex, "#version 330 core\nlayout (location = 0) in vec2 circle_verts; uniform vec2 particle_pos; uniform mat2 radius_scaler; void main(){ gl_Position = vec4(radius_scaler * circle_verts + particle_pos, 0, 1); }");
+    gl_shsrc_single(vertex, "#version 330 core\nlayout (location = 0) in vec2 circle_verts; uniform vec2 pdraw_offset; uniform float radius_scaler; void main(){ gl_Position = vec4(radius_scaler * circle_verts + pdraw_offset, 0, 1); }");
     gl_shsrc_single(fragment, "#version 330 core\nvoid main(){ gl_FragColor = vec4(1, 0, 0, 1); }");
 
     glCompileShader(vertex);
@@ -167,8 +168,8 @@ int main()
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 
-    const GLufrm Umat2_radius_scaler = glGetUniformLocation(program, "radius_scaler");
-    const GLufrm Uvec2_particle_pos = glGetUniformLocation(program, "particle_pos");
+    const GLu1f radius_scaler = glGetUniformLocation(program, "radius_scaler");
+    const GLu2f pdraw_offset = glGetUniformLocation(program, "pdraw_offset");
 
     glPolygonMode(GL_FRONT, GL_FILL);
 
@@ -188,14 +189,6 @@ int main()
         {
             particle_pos[i][X] += particle_vel[i][X] * delta_ms;
             particle_pos[i][Y] += particle_vel[i][Y] * delta_ms;
-
-            // Essentially a 2x2 identity matrix scaled by the particle radius.
-            const mat2 radius_scaler_matrix = {
-                { particle_rad[i], 0.0f },
-                { 0.0f, particle_rad[i] }
-            };
-
-            glUniformMatrix2fv(Umat2_radius_scaler, 1, GL_FALSE, *radius_scaler_matrix);
 
             if (particle_pos[i][X] + particle_rad[i] > 1)
             {
@@ -229,7 +222,8 @@ int main()
                 }
             }
 
-            glUniform2f(Uvec2_particle_pos, particle_pos[i][X], particle_pos[i][Y]);
+            glUniform1f(radius_scaler, particle_rad[i]);
+            glUniform2f(pdraw_offset, particle_pos[i][X], particle_pos[i][Y]);
             glDrawElements(GL_TRIANGLES, sizeof(circle_indices) / sizeof(unsigned int), GL_UNSIGNED_INT, (void *) 0);
         }
 
