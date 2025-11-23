@@ -30,6 +30,7 @@ typedef GLint GLu2f; // Location of uniform float[2] a.k.a. vec2
 #define X 0 // X index of float[2]'s.
 #define Y 1 // Y index of float[2]'s.
 #define PSIM_INLINE __attribute__((always_inline)) static inline
+#define INFO_LOG_BUFF_LEN 1024
 
 // Bypasses requirement for strange syntax.
 PSIM_INLINE void gl_shsrc_single(GLref shader, const char *const src)
@@ -89,6 +90,11 @@ int main()
     glViewport(0, 0, WIN_SIDELEN, WIN_SIDELEN);
     glClearColor(BG_COLOR_RGB, 1.0);
 
+    if (INIT_VEL_MAX < INIT_VEL_MIN || PARTICLE_RAD_MAX < PARTICLE_RAD_MIN)
+    {
+        puts("Max(es) definition(s) are lesser than min(s) definitions.");
+    }
+
     vec2
         particle_pos[PART_COUNT],
         particle_vel[PART_COUNT];
@@ -100,8 +106,10 @@ int main()
     {
         particle_rad[i] =    frand(PARTICLE_RAD_MIN, PARTICLE_RAD_MAX);
 
-        particle_pos[i][X] = frand(-1 + particle_rad[i], 1 - particle_rad[i]);
-        particle_pos[i][Y] = frand(-1 + particle_rad[i], 1 - particle_rad[i]);
+        // TODO: Implement grid system from https://www.desmos.com/calculator/enk9x2g4qw.
+
+        // particle_pos[i][X] = frand(-1 + particle_rad[i], 1 - particle_rad[i]);
+        // particle_pos[i][Y] = frand(-1 + particle_rad[i], 1 - particle_rad[i]);
 
         particle_vel[i][X] = frand(INIT_VEL_MIN, INIT_VEL_MAX) * (brand() ? 1 : -1);
         particle_vel[i][Y] = frand(INIT_VEL_MIN, INIT_VEL_MAX) * (brand() ? 1 : -1);
@@ -160,6 +168,17 @@ int main()
     glAttachShader(program, fragment);
 
     glLinkProgram(program);
+
+    GLint plink_success;
+    glGetProgramiv(program, GL_LINK_STATUS, &plink_success);
+
+    if (plink_success == GL_FALSE)
+    {
+        char info_log_buff[INFO_LOG_BUFF_LEN];
+        glGetProgramInfoLog(program, INFO_LOG_BUFF_LEN, NULL, info_log_buff);
+        puts(info_log_buff);
+    }
+
     glUseProgram(program);
 
     glDetachShader(program, vertex);
