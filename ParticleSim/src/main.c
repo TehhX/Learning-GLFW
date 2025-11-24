@@ -4,6 +4,7 @@
 
 // CGLM:
 #include "cglm/vec2.h"
+#include "cglm/util.h"
 
 // STD:
 #include "time.h"
@@ -14,14 +15,17 @@
 
 // Customizable definitions:
 #define WIN_SIDELEN 1000
-#define BG_COLOR_RGB 0.1f, 0.1f, 0.1f
-#define PART_COUNT 500
-#define PARTICLE_RAD_MIN 0.0025f
-#define PARTICLE_RAD_MAX 0.03f
-#define PART_VERTS 21
+#define PART_COLOR_RGB "0.6f, 0.45f, 0.9f"
+#define BG_COLOR_RGB 0.1f, 0.05f, 0.1f
+#define PART_COUNT 400
+#define PARTICLE_RAD_MIN 0.01f
+#define PARTICLE_RAD_MAX 0.045f
+#define PART_VERTS 32
 #define INIT_VEL_MIN 0.025f
 #define INIT_VEL_MAX 0.3f
 #define PRINT_FPS false
+#define SIM_SPEED_INIT 1.0f
+#define SIM_SPEED_SCROLL_STEP 0.01f
 
 // Helper definitions:
 typedef GLuint GLref; // Reference to GL component e.g. shader.
@@ -49,6 +53,13 @@ PSIM_INLINE float frand(float min, float max)
 PSIM_INLINE bool brand()
 {
     return rand() & 1;
+}
+
+static float sim_speed = SIM_SPEED_INIT;
+
+void scroll_sim_speed(GLFWwindow *win, double dx, double dy)
+{
+    sim_speed += (float) dy * SIM_SPEED_SCROLL_STEP;
 }
 
 int main()
@@ -86,7 +97,8 @@ int main()
         return 1;
     }
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
+    glfwSetScrollCallback(main_window, scroll_sim_speed);
 
     glViewport(0, 0, WIN_SIDELEN, WIN_SIDELEN);
     glClearColor(BG_COLOR_RGB, 1.0);
@@ -178,7 +190,7 @@ int main()
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
     gl_shsrc_single(vertex, "#version 330 core\nlayout (location = 0) in vec2 circle_verts; uniform vec2 pdraw_offset; uniform float radius_scaler; void main(){ gl_Position = vec4(radius_scaler * circle_verts + pdraw_offset, 0, 1); }");
-    gl_shsrc_single(fragment, "#version 330 core\nvoid main(){ gl_FragColor = vec4(1, 0, 0, 1); }");
+    gl_shsrc_single(fragment, "#version 330 core\nvoid main(){ gl_FragColor = vec4(" PART_COLOR_RGB ", 1); }");
 
     glCompileShader(vertex);
     glCompileShader(fragment);
@@ -226,8 +238,8 @@ int main()
 
         for (int i = 0; i < PART_COUNT; ++i)
         {
-            particle_pos[i][X] += particle_vel[i][X] * delta_ms;
-            particle_pos[i][Y] += particle_vel[i][Y] * delta_ms;
+            particle_pos[i][X] += particle_vel[i][X] * delta_ms * sim_speed;
+            particle_pos[i][Y] += particle_vel[i][Y] * delta_ms * sim_speed;
 
             if (particle_pos[i][X] + particle_rad[i] > 1)
             {
@@ -252,14 +264,6 @@ int main()
             }
 
             // TODO: Remake particle collision system.
-            for (int j = 0; j < PART_COUNT; ++j)
-            {
-                const float distance = glm_vec2_distance(particle_pos[i], particle_pos[j]);
-                if (i != j && distance < particle_rad[i] + particle_rad[j])
-                {
-
-                }
-            }
 
             glUniform1f(radius_scaler, particle_rad[i]);
             glUniform2f(pdraw_offset, particle_pos[i][X], particle_pos[i][Y]);
