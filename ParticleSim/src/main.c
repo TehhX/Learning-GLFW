@@ -14,13 +14,14 @@
 
 // Customizable definitions:
 #define WIN_SIDELEN 1000
-#define BG_COLOR_RGB 0.1, 0.1, 0.1
+#define BG_COLOR_RGB 0.1f, 0.1f, 0.1f
 #define PART_COUNT 500
-#define PARTICLE_RAD_MIN 0.005
-#define PARTICLE_RAD_MAX 0.05
+#define PARTICLE_RAD_MIN 0.0025f
+#define PARTICLE_RAD_MAX 0.03f
 #define PART_VERTS 21
 #define INIT_VEL_MIN 0.025
 #define INIT_VEL_MAX 0.3
+#define PRINT_FPS false
 
 // Helper definitions:
 typedef GLuint GLref; // Reference to GL component e.g. shader.
@@ -101,19 +102,44 @@ int main()
 
     float particle_rad[PART_COUNT];
 
-    // TODO: Make sure the positions (accounting for radii) don't initially overlap with eachother or the walls. Maybe a grid of points based on radius max instead of random.
     for (int i = 0; i < PART_COUNT; ++i)
     {
-        particle_rad[i] =    frand(PARTICLE_RAD_MIN, PARTICLE_RAD_MAX);
-
-        // TODO: Implement grid system from https://www.desmos.com/calculator/enk9x2g4qw.
-
-        // particle_pos[i][X] = frand(-1 + particle_rad[i], 1 - particle_rad[i]);
-        // particle_pos[i][Y] = frand(-1 + particle_rad[i], 1 - particle_rad[i]);
+        particle_rad[i] = frand(PARTICLE_RAD_MIN, PARTICLE_RAD_MAX);
 
         particle_vel[i][X] = frand(INIT_VEL_MIN, INIT_VEL_MAX) * (brand() ? 1 : -1);
         particle_vel[i][Y] = frand(INIT_VEL_MIN, INIT_VEL_MAX) * (brand() ? 1 : -1);
     }
+
+    /*
+        TODO:
+            * Delete superfluous varaibles and calculations.
+            * Condense below into an index-based loop instead of x/y nested loops for various benefits.
+            * Provide warning(s) to user if a collision free beginning is impossible given PARTICLE_RAD_MAX and PART_COUNT.
+    */
+
+    const int individual_count = (int) ceilf(sqrtf(PART_COUNT));
+
+    const float
+        tolerance = (2.0f - 2.0f * PARTICLE_RAD_MAX * individual_count) / (individual_count + 1.0f),
+        starting_position = -1.0f + tolerance + PARTICLE_RAD_MAX,
+        inter_particle_delta = tolerance + 2.0f * PARTICLE_RAD_MAX;
+
+    for (int y = 0; y < individual_count; ++y)
+    {
+        for (int x = 0; x < individual_count; ++x)
+        {
+            const int particle_index = (int) (y * individual_count + x);
+
+            if (y * individual_count + x >= PART_COUNT)
+            {
+                goto POS_LOOPS_MULTIBREAK;
+            }
+
+            particle_pos[particle_index][X] = starting_position + inter_particle_delta * x;
+            particle_pos[particle_index][Y] = starting_position + inter_particle_delta * y;
+        }
+    }
+    POS_LOOPS_MULTIBREAK:
 
     vec2 circle_verts[PART_VERTS + 1];
 
@@ -134,6 +160,7 @@ int main()
         circle_indices[i][1] = i + 1;
         circle_indices[i][2] = i + 2;
     }
+
     circle_indices[PART_VERTS - 1][0] = 0;
     circle_indices[PART_VERTS - 1][1] = PART_VERTS;
     circle_indices[PART_VERTS - 1][2] = 1;
@@ -171,7 +198,6 @@ int main()
 
     GLint plink_success;
     glGetProgramiv(program, GL_LINK_STATUS, &plink_success);
-
     if (plink_success == GL_FALSE)
     {
         char info_log_buff[INFO_LOG_BUFF_LEN];
@@ -200,7 +226,9 @@ int main()
         const float delta_ms = glfwGetTime();
         glfwSetTime(0);
 
-        // printf("FPS: %6.2f\n", 1 / delta_ms);
+        #if PRINT_FPS
+            printf("FPS: %6.2f\n", 1 / delta_ms);
+        #endif
 
         glClear(GL_COLOR_BUFFER_BIT);
 
