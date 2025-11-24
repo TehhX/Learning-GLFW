@@ -19,15 +19,15 @@
 #define PARTICLE_RAD_MIN 0.0025f
 #define PARTICLE_RAD_MAX 0.03f
 #define PART_VERTS 21
-#define INIT_VEL_MIN 0.025
-#define INIT_VEL_MAX 0.3
+#define INIT_VEL_MIN 0.025f
+#define INIT_VEL_MAX 0.3f
 #define PRINT_FPS false
 
 // Helper definitions:
 typedef GLuint GLref; // Reference to GL component e.g. shader.
 typedef GLint GLu1f; // Location of uniform float
 typedef GLint GLu2f; // Location of uniform float[2] a.k.a. vec2
-#define particle_mass(INDEX) (particle_rad[INDEX] * particle_rad[INDEX]) // r^2, pi not required as it is common across all masses and changes no calculations. // TODO: Make individual.
+#define particle_mass(INDEX) (particle_rad[INDEX] * particle_rad[INDEX]) // r^2, pi not required as it is common across all masses and changes no calculations.
 #define X 0 // X index of float[2]'s.
 #define Y 1 // Y index of float[2]'s.
 #define PSIM_INLINE __attribute__((always_inline)) static inline
@@ -91,9 +91,22 @@ int main()
     glViewport(0, 0, WIN_SIDELEN, WIN_SIDELEN);
     glClearColor(BG_COLOR_RGB, 1.0);
 
-    if (INIT_VEL_MAX < INIT_VEL_MIN || PARTICLE_RAD_MAX < PARTICLE_RAD_MIN)
+    const int individual_count = (int) ceilf(sqrtf(PART_COUNT));
+
+    if (INIT_VEL_MAX < INIT_VEL_MIN)
     {
-        puts("Max(es) definition(s) are lesser than min(s) definitions.");
+        puts("Initial velocity max < min.");
+        return 1;
+    }
+    else if (PARTICLE_RAD_MAX < PARTICLE_RAD_MIN)
+    {
+        puts("Particle radius max < min.");
+        return 1;
+    }
+    else if (PARTICLE_RAD_MAX > (1.0f / individual_count))
+    {
+        puts("Starting particles will always collide.");
+        return 1;
     }
 
     vec2
@@ -110,36 +123,16 @@ int main()
         particle_vel[i][Y] = frand(INIT_VEL_MIN, INIT_VEL_MAX) * (brand() ? 1 : -1);
     }
 
-    /*
-        TODO:
-            * Delete superfluous varaibles and calculations.
-            * Condense below into an index-based loop instead of x/y nested loops for various benefits.
-            * Provide warning(s) to user if a collision free beginning is impossible given PARTICLE_RAD_MAX and PART_COUNT.
-    */
-
-    const int individual_count = (int) ceilf(sqrtf(PART_COUNT));
-
     const float
         tolerance = (2.0f - 2.0f * PARTICLE_RAD_MAX * individual_count) / (individual_count + 1.0f),
         starting_position = -1.0f + tolerance + PARTICLE_RAD_MAX,
         inter_particle_delta = tolerance + 2.0f * PARTICLE_RAD_MAX;
 
-    for (int y = 0; y < individual_count; ++y)
+    for (int i = 0; i < PART_COUNT; ++i)
     {
-        for (int x = 0; x < individual_count; ++x)
-        {
-            const int particle_index = (int) (y * individual_count + x);
-
-            if (y * individual_count + x >= PART_COUNT)
-            {
-                goto POS_LOOPS_MULTIBREAK;
-            }
-
-            particle_pos[particle_index][X] = starting_position + inter_particle_delta * x;
-            particle_pos[particle_index][Y] = starting_position + inter_particle_delta * y;
-        }
+        particle_pos[i][X] = starting_position + inter_particle_delta * (i % individual_count);
+        particle_pos[i][Y] = starting_position + inter_particle_delta * (i / individual_count);
     }
-    POS_LOOPS_MULTIBREAK:
 
     vec2 circle_verts[PART_VERTS + 1];
 
@@ -148,12 +141,11 @@ int main()
 
     for (int i = 1; i < PART_VERTS + 1; ++i)
     {
-        circle_verts[i][X] = cosf(i * 2 * GLM_PI / PART_VERTS);
-        circle_verts[i][Y] = sinf(i * 2 * GLM_PI / PART_VERTS);
+        circle_verts[i][X] = cosf(i * 2.0f * (float) GLM_PI / PART_VERTS);
+        circle_verts[i][Y] = sinf(i * 2.0f * (float) GLM_PI / PART_VERTS);
     }
 
     GLuint circle_indices[PART_VERTS][3];
-
     for (int i = 0; i < PART_VERTS - 1; ++i)
     {
         circle_indices[i][0] = 0;
