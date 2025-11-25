@@ -4,7 +4,6 @@
 
 // CGLM:
 #include "cglm/vec2.h"
-#include "cglm/util.h"
 
 // STD:
 #include "time.h"
@@ -110,12 +109,14 @@ int main()
         puts("Initial velocity max < min.");
         return 1;
     }
-    else if (PARTICLE_RAD_MAX < PARTICLE_RAD_MIN)
+    
+    if (PARTICLE_RAD_MAX < PARTICLE_RAD_MIN)
     {
         puts("Particle radius max < min.");
         return 1;
     }
-    else if (PARTICLE_RAD_MAX > (1.0f / individual_count))
+    
+    if (PARTICLE_RAD_MAX > (1.0f / individual_count))
     {
         puts("Starting particles will always collide.");
         return 1;
@@ -227,6 +228,11 @@ int main()
     // TODO: Move into its own thread for Windows's sake.
     while (glfwWindowShouldClose(main_window) == GLFW_FALSE)
     {
+        if (glfwGetKey(main_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            break;
+        }
+
         const float delta_ms = glfwGetTime();
         glfwSetTime(0);
 
