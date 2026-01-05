@@ -226,13 +226,8 @@ int main()
     glfwSetTime(0);
 
     // TODO: Move into its own thread for Windows's sake.
-    while (glfwWindowShouldClose(main_window) == GLFW_FALSE)
+    while (glfwWindowShouldClose(main_window) == GLFW_FALSE || glfwGetKey(main_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
-        if (glfwGetKey(main_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        {
-            break;
-        }
-
         const float delta_ms = glfwGetTime();
         glfwSetTime(0);
 
