@@ -10,6 +10,7 @@ The root folder contains the gitignore, README, and license files, along with se
 * GLAD - By compiling a static library from their source and then placing the relevant files under this folder as shown in the below tree.
 * STB_IMAGE - By placing it under this folder as shown in the below tree.
 * CGLM - Download from [recp/cglm](https://github.com/recp/cglm). I used [ver. 0.9.6](https://github.com/recp/cglm/tree/v0.9.6) in all applicable sub-projects. If any issues arise, they may be caused by using a different version. Place as shown in below tree.
+* FreeType2 - Download from [their website](http://www.freetype.org/), then make the library available in your path, or place them as shown in the below tree.
 
 ### Include/libs tree:
 ```
@@ -18,7 +19,7 @@ The root folder contains the gitignore, README, and license files, along with se
 |   |
 |   +---cglm
 |   |       cglm.h
-|   |       <rest of .h files and accompanying folders>
+|   |       ...
 |   |
 |   +---GLAD
 |   |       glad.h
@@ -27,13 +28,17 @@ The root folder contains the gitignore, README, and license files, along with se
 |   |       glfw3.h
 |   |       glfw3native.h
 |   |
+|   +---freetype2
+|   |       ft2build.h
+|   |
 |   \---KHR
 |           khrplatform.h
 |
 +---libs
         libglad.<OS specific lib-extension>
-        libglfw.<OS specific lib-extension> <if not using package manager>
+        libglfw.<OS specific lib-extension> (if not using package manager)
         libcglm.<OS specific lib-extension>
+        libfreetype.<OS specific lib-extension> (if not using package manager)
 ```
 
 ## Compiling Any Example With CMake
