@@ -12,6 +12,9 @@ The root folder contains the gitignore, README, and license files, along with se
 * CGLM - Download from [recp/cglm](https://github.com/recp/cglm). I used [ver. 0.9.6](https://github.com/recp/cglm/tree/v0.9.6) in all applicable sub-projects. If any issues arise, they may be caused by using a different version. Place as shown in below tree.
 * FreeType2 - Download from [their website](http://www.freetype.org/), then make the library available in your path, or place them as shown in the below tree.
 
+### Additional Requirement Notes
+* FreeMono.otf is included under the DisplayText sub-folder. Taken from [their website](https://www.gnu.org/software/freefont/).
+
 ### Include/libs tree:
 ```
 +---include
