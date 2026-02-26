@@ -24,8 +24,9 @@ endif ()
 if (UNIX)
     # Need to include the freetype2 include folder for some reason.
     target_include_directories(DisplayText PRIVATE /usr/include/freetype2/)
+    target_include_directories(DisplayText PRIVATE ${PROJECT_SOURCE_DIR}/../include/freetype2/)
 else ()
-    message(FATAL_ERROR "On non-UNIX OS, need to know where freetype2 is.")
+    message(FATAL_ERROR "On non-UNIX OS, need to know where freetype2 is. Consider a PR.")
 endif ()
 
 target_link_libraries(DisplayText PRIVATE freetype)
