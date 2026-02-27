@@ -62,7 +62,7 @@ int main()
     typedef struct character_data
     {
         unsigned int
-            texture,
+            texture_id,
             advance;
 
         ivec2
@@ -82,8 +82,8 @@ int main()
         }
 
         // Generate a texture for the character
-        glGenTextures(1, &character_data_arr[current_character].texture);
-        glBindTexture(GL_TEXTURE_2D, character_data_arr[current_character].texture);
+        glGenTextures(1, &character_data_arr[current_character].texture_id);
+        glBindTexture(GL_TEXTURE_2D, character_data_arr[current_character].texture_id);
 
         // Load glyph texture data (More info on each argument via website at top of this file)
         glTexImage2D
