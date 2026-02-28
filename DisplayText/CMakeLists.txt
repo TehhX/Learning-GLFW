@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(SRC
     main.c
+    gensh.c
 )
 
 include("../BASE_CMakeLists.cmake")

@@ -51,7 +51,7 @@ int main()
 
     // Use stb_image.h to intake image information:
     int tex_width, tex_height, tex_chann_c;
-    // WARNING! The path in the next line assumes your terminal is currently inside Textures. The triangle will be black if you aren't.
+    // WARNING! The path in the next line assumes your terminal is currently inside your CMake build folder. The triangle will be black if you aren't.
     unsigned char *tex_data = stbi_load("res/bricks.jpg", &tex_width, &tex_height, &tex_chann_c, 0);
 
     // Put the texture into the buffer, generate its mipmap (half^n sized images):

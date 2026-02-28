@@ -97,8 +97,8 @@ int main(int argc, char **argv)
     }
 
 // Process input, generate files:
-    fputs("#ifndef " GENERATED_SHADER_GUARD "\n#define " GENERATED_SHADER_GUARD "\n//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\ntypedef const char*const " STR_TYPEDEF_TNAME ";extern " STR_TYPEDEF_TNAME " ", f_header);
-    fputs("#include \"" GENERATED_SHADER_FNAME ".h\"\n//GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\n" STR_TYPEDEF_TNAME " ", f_source);
+    fputs("#ifndef " GENERATED_SHADER_GUARD "\n#define " GENERATED_SHADER_GUARD "\n// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\ntypedef const char*const " STR_TYPEDEF_TNAME ";extern " STR_TYPEDEF_TNAME " ", f_header);
+    fputs("#include \"" GENERATED_SHADER_FNAME ".h\"\n// GENERATED WITH EMBED_GLSL. DON'T EDIT MANUALLY!\n" STR_TYPEDEF_TNAME " ", f_source);
 
     // Create string variables:
     for (int i = 0; i < argc; ++i)
@@ -181,6 +181,7 @@ int main(int argc, char **argv)
         fprintf(f_source, "\"%c", delim);
     }
 
+    fputc('\n', f_source);
     fputs("\n#endif\n", f_header);
 
 // Close files:
