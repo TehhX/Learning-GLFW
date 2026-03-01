@@ -38,7 +38,7 @@ void framebuf_size_callback(__attribute__((unused)) GLFWwindow *window, int new_
 }
 
 // TODO: Text is deformed based on the aspect ratio of the window, e.g taller window = taller text
-int main()
+int main(int argc, char **argv)
 {
     // Regular GLFW/GLAD initialization
     glfwInit();
@@ -64,7 +64,8 @@ int main()
 
     // Create a FreeMono face
     FT_Face face;
-    if (FT_New_Face(library, "FreeMono.otf", 0, &face))
+    // Will load first argument as font filepath if provided, else just use FreeMono from the repository
+    if (FT_New_Face(library, (argc == 2 ? argv[1] : "FreeMono.otf"), 0, &face))
     {
         // If fail, return error
         puts("Failed to load font face.");
@@ -108,21 +109,21 @@ int main()
         glGenTextures(1, &character_data_arr[current_character].texture_id);
         glBindTexture(GL_TEXTURE_2D, character_data_arr[current_character].texture_id);
 
-        // Load glyph texture data (More info on each argument via website at top of this file)
+        // Load glyph texture data
         glTexImage2D
         (
-            GL_TEXTURE_2D,
-            0,
-            GL_RED,
-            face->glyph->bitmap.width,
-            face->glyph->bitmap.rows,
-            0,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            face->glyph->bitmap.buffer
+            GL_TEXTURE_2D,             // Specifies the target, in this case a 2D texture
+            0,                         // Mipmap level, base level is 0
+            GL_RED,                    // Specifies the data formatting to use in VRAM. The loaded image is an 8bit B&W mask for the actual color. GL_RED will read 1 byte as all the data for a single pixel which we can use later
+            face->glyph->bitmap.width, // The width of the texture
+            face->glyph->bitmap.rows,  // The height of the texture
+            0,                         // Legacy value, unsure of its purpose. May be set to 0
+            GL_RED,                    // Specifies the data formatting of the source image. The source image is in 8bit B&W, so only 1 byte is required per pixel
+            GL_UNSIGNED_BYTE,          // Data is stored as bytes, or uchars
+            face->glyph->bitmap.buffer // The actual image data to use. freetype2 generated the glyph inside the bitmap buffer under the face->glyph
         );
 
-        // Set texture options
+        // Set texture options for current texture
         glTexParameteri(GL_TEXTURE_2D,     GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D,     GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,        GL_LINEAR);
@@ -187,7 +188,7 @@ int main()
 
     // Orthographic perspective
     mat4 ortho_projection;
-    glm_ortho(0.0f, WINDOW_HEIGHT, 0.0f, WINDOW_WIDTH, 0.0f, 1.0f, ortho_projection);
+    glm_ortho(0.0f, WINDOW_HEIGHT, 0.0f, WINDOW_WIDTH, -1.0f, 1.0f, ortho_projection);
 
     GLint u_projection = glGetUniformLocation(program, "projection");
     glUniformMatrix4fv(u_projection, 1, GL_FALSE, *ortho_projection);
@@ -213,6 +214,7 @@ int main()
 
                 vertices[6][4] =
                 {
+                    // 
                     { xpos,     ypos + h,   0.0f, 0.0f },
                     { xpos,     ypos,       0.0f, 1.0f },
                     { xpos + w, ypos,       1.0f, 1.0f },
@@ -238,13 +240,3 @@ int main()
         glfwPollEvents();
     }
 }
-
-/*
-    Error template:
-    ---------------
-    if ()
-    {
-        puts("ERROR");
-        return 1;
-    }
-*/
