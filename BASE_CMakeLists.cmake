@@ -15,6 +15,15 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Individual sub-projects must specify ${SRC} with the names of all source files.
 list(TRANSFORM SRC PREPEND "src/")
 
+# Root folder (Assuming sub-project requiring step-out)
+set(ROOT ${PROJECT_SOURCE_DIR}/..)
+
+# Build Embed and generate gensh files before continuing
+execute_process(COMMAND ${CMAKE_COMMAND} -S ${ROOT}/Utilities/Embed/ -B ${ROOT}/Utilities/Embed/build/ -G ${CMAKE_GENERATOR})
+execute_process(COMMAND ${CMAKE_COMMAND} --build ${ROOT}/Utilities/Embed/build/)
+# sh -c required for wildcard expansion
+execute_process(COMMAND sh -c "${ROOT}/Utilities/Embed/build/Embed ${CMAKE_SOURCE_DIR}/src/ ${CMAKE_SOURCE_DIR}/src/*.frag ${CMAKE_SOURCE_DIR}/src/*.vert")
+
 # Create executable named after the sub-project name using files from SRC.
 add_executable(${PROJECT_NAME} ${SRC})
 
@@ -22,9 +31,6 @@ add_executable(${PROJECT_NAME} ${SRC})
 if (WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE $<CONFIG:Release>)
 endif()
-
-# Root folder (Assuming sub-project requiring step-out)
-set(ROOT ${PROJECT_SOURCE_DIR}/..)
 
 # Set include/libs directories:
 target_include_directories(${PROJECT_NAME} PRIVATE ${ROOT}/include/)
