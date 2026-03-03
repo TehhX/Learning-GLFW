@@ -10,9 +10,9 @@
 typedef float vec2[2];
 
 // Modifiable values
-#define TRIANGLE_ORIGIN (vec2){ 0, 0 }
-#define TRIANGLE_SIDELEN (float) 1
-#define SQUARE_ORIGIN (vec2){ 0, 0 }
+#define TRIANGLE_ORIGIN (vec2){ 0, -0.25 }
+#define TRIANGLE_SIDELEN (float) 2
+#define SQUARE_ORIGIN (vec2){ -0.5, 0.5 }
 #define SQUARE_SIDELEN (float) 1
 
 // Array indices
@@ -32,7 +32,6 @@ void key_press_callback(GLFWwindow *window, int key, int scancode, int action, i
     if (key == GLFW_KEY_E && action == GLFW_PRESS)
     {
         viewing_square = !viewing_square;
-        printf("Now viewing the %s.\n", (viewing_square ? "square" : "triangle"));
     }
 }
 
@@ -139,11 +138,6 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(square_indices), square_indices, GL_STATIC_DRAW);
 
-    glBindVertexArray(0);
-
-    glDeleteBuffers(1, &vbo_sqr);
-    glDeleteBuffers(1, &vbo_tri);
-
     // Wireframe mode (optional)
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -162,11 +156,16 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 3);
         }
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    glDeleteBuffers(1, &vbo_sqr);
+    glDeleteBuffers(1, &vbo_tri);
+    glDeleteBuffers(1, &ebo);
+    glDeleteVertexArrays(1, &vao_sqr);
+    glDeleteVertexArrays(1, &vao_tri);
+    glDeleteProgram(program);
 
     glfwMakeContextCurrent(NULL);
     glfwDestroyWindow(window);
