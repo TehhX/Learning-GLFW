@@ -21,8 +21,7 @@ set(ROOT ${PROJECT_SOURCE_DIR}/..)
 # Build Embed and generate gensh files before continuing
 execute_process(COMMAND ${CMAKE_COMMAND} -S ${ROOT}/Utilities/Embed/ -B ${ROOT}/Utilities/Embed/build/ -G ${CMAKE_GENERATOR})
 execute_process(COMMAND ${CMAKE_COMMAND} --build ${ROOT}/Utilities/Embed/build/)
-# sh -c required for wildcard expansion
-execute_process(COMMAND sh -c "${ROOT}/Utilities/Embed/build/Embed ${CMAKE_SOURCE_DIR}/src/ ${CMAKE_SOURCE_DIR}/src/*.frag ${CMAKE_SOURCE_DIR}/src/*.vert")
+execute_process(COMMAND sh -c "${ROOT}/Utilities/Embed/build/Embed ${CMAKE_SOURCE_DIR}/src/ ${CMAKE_SOURCE_DIR}/src/*.frag ${CMAKE_SOURCE_DIR}/src/*.vert") # sh -c required for wildcard expansion. TODO: This makes it Linux only. Extend to other platforms.
 
 # Create executable named after the sub-project name using files from SRC.
 add_executable(${PROJECT_NAME} ${SRC})
