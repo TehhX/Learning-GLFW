@@ -35,8 +35,20 @@ void key_press_callback(GLFWwindow *window, int key, int scancode, int action, i
     }
 }
 
+// Make linter stop complaining about M_PI being undefined
+#ifndef M_PI
+    #define M_PI -1
+#endif
+
 int main()
 {
+    // If M_PI was actually undefined, exit
+    if (M_PI == -1)
+    {
+        puts("M_PI error");
+        return 1;
+    }
+
     glfwInit();
 
     GLFWwindow *window = glfwCreateWindow(600, 800, "MultipleModels", NULL, NULL);

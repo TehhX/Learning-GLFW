@@ -15,7 +15,6 @@
 #include "gensh.h"
 
 // Modifiable values
-#define WORDS_SCALE (float) 1
 #define WORDS_SIZE (int) 70
 
 #define WORDS_ON_SCREEN "Hello, world!"
@@ -26,16 +25,14 @@
 #define WINDOW_WIDTH  (float) 600
 #define WINDOW_HEIGHT (float) 600
 
-// Source a shader
-void gl_shsrc_single(GLuint shader, const char *const src)
-{
-    glShaderSource(shader, 1, &src, NULL);
-}
-
 void framebuf_size_callback(__attribute__((unused)) GLFWwindow *window, int new_width, int new_height) {
     // This function changes the OpenGL viewport rectangle posX, posY, sizX, sizY
     glViewport(0, 0, new_width, new_height);
 }
+
+// Coordinate indices
+#define X 0
+#define Y 1
 
 // TODO: Text is deformed based on the aspect ratio of the window, e.g taller window = taller text
 int main(int argc, char **argv)
@@ -79,37 +76,35 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Disable byte-alignment restriction
+    // Disable byte-alignment restriction, as it is not always going to be aligned to 3 bytes as with RGB
     glPixelStorei(GL_UNPACK_ALIGNMENT, GL_TRUE);
 
-    // Struct to contain data on loaded character
+    // Struct to contain data of a loaded character texture
     typedef struct character_data
     {
         unsigned int
-            texture_id,
-            advance;
+            texture_id, // GL generated texture ID for binding etc
+            advance;    // Advance in 1/64ths of a pixel between this and next character
 
         ivec2
-            size,
-            bearing;
+            size,       // X and Y size of character bounds
+            bearing;    // Space between origin and start of character
     }
     character_data;
 
-    character_data character_data_arr[128];
-    for (unsigned char current_character = 0; current_character < 128; ++current_character)
+    character_data character_data_arr[sizeof(WORDS_ON_SCREEN) - 1];
+    for (int i = 0; i < sizeof(WORDS_ON_SCREEN) - 1; ++i)
     {
         // Load specific character from face. FT_LOAD_RENDER tells it to create an 8-bit B&W bitmap.
-        if (FT_Load_Char(face, current_character, FT_LOAD_RENDER))
+        if (FT_Load_Char(face, WORDS_ON_SCREEN[i], FT_LOAD_RENDER))
         {
-            printf("Failed to load character glyph '%c'.", (char) current_character);
+            printf("Failed to load character glyph '%c'.", WORDS_ON_SCREEN[i]);
             return 1;
         }
 
-        // Generate a texture for the character
-        glGenTextures(1, &character_data_arr[current_character].texture_id);
-        glBindTexture(GL_TEXTURE_2D, character_data_arr[current_character].texture_id);
+        glGenTextures(1, &character_data_arr[i].texture_id);
+        glBindTexture(GL_TEXTURE_2D, character_data_arr[i].texture_id);
 
-        // Load glyph texture data
         glTexImage2D
         (
             GL_TEXTURE_2D,             // Specifies the target, in this case a 2D texture
@@ -123,16 +118,14 @@ int main(int argc, char **argv)
             face->glyph->bitmap.buffer // The actual image data to use. freetype2 generated the glyph inside the bitmap buffer under the face->glyph
         );
 
-        // Set texture options for current texture
         glTexParameteri(GL_TEXTURE_2D,     GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D,     GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,        GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,        GL_LINEAR);
 
-        // Store character texture for later use
-        memcpy(&character_data_arr[current_character].size,    &(ivec2){ face->glyph->bitmap.width, face->glyph->bitmap.rows }, sizeof(ivec2));
-        memcpy(&character_data_arr[current_character].bearing, &(ivec2){ face->glyph->bitmap_left,  face->glyph->bitmap_top },  sizeof(ivec2));
-        character_data_arr[current_character].advance = face->glyph->advance.x;
+        memcpy(&character_data_arr[i].size,    &(ivec2){ face->glyph->bitmap.width, face->glyph->bitmap.rows }, sizeof(ivec2));
+        memcpy(&character_data_arr[i].bearing, &(ivec2){ face->glyph->bitmap_left,  face->glyph->bitmap_top },  sizeof(ivec2));
+        character_data_arr[i].advance = face->glyph->advance.x;
     }
 
     // Surrender freetype2's resources as they are no longer required
@@ -144,7 +137,6 @@ int main(int argc, char **argv)
         vshader = glCreateShader(GL_VERTEX_SHADER),
         fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    // Source shaders
     glShaderSource(vshader, 1, &shader_vert, NULL);
     glShaderSource(fshader, 1, &shader_frag, NULL);
 
@@ -157,9 +149,8 @@ int main(int argc, char **argv)
     glLinkProgram(program);
     glUseProgram(program);
 
-    int link_success;
+    GLint link_success;
     glGetProgramiv(program, GL_LINK_STATUS, &link_success);
-
     if (!link_success)
     {
         char info[1024];
@@ -169,7 +160,6 @@ int main(int argc, char **argv)
     }
 
     // Must enable blending
-    glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -180,60 +170,49 @@ int main(int argc, char **argv)
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+    // Allocate memory in the buffer. This is required for subsequent BufferSubData calls
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Orthographic perspective
+    // Orthographic perspective. When multiplying by the produced mat4, y values between 0 and WINDOW_HEIGHT will be normalized between -1.0 and +1.0. The other values work similarly
     mat4 ortho_projection;
     glm_ortho(0.0f, WINDOW_HEIGHT, 0.0f, WINDOW_WIDTH, -1.0f, 1.0f, ortho_projection);
 
-    GLint u_projection = glGetUniformLocation(program, "projection");
-    glUniformMatrix4fv(u_projection, 1, GL_FALSE, *ortho_projection);
+    glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, *ortho_projection);
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE)
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // TODO: Play with, figure out.
         float x_offset = WORDS_OFFSET_X;
-        glActiveTexture(GL_TEXTURE0);
 
-        for (size_t i = 0; WORDS_ON_SCREEN[i]; ++i)
+        for (size_t i = 0; i < sizeof(WORDS_ON_SCREEN) - 1; ++i)
         {
-            const character_data *const current_char_data = character_data_arr + WORDS_ON_SCREEN[i];
-
             const float
-                xpos = x_offset + current_char_data->bearing[0] * WORDS_SCALE,
-                ypos = WORDS_OFFSET_Y - (current_char_data->size[1] - current_char_data->bearing[1]) * WORDS_SCALE,
+                x = x_offset + character_data_arr[i].bearing[X],
+                y = WORDS_OFFSET_Y - character_data_arr[i].size[Y] + character_data_arr[i].bearing[Y],
 
-                w = current_char_data->size[0] * WORDS_SCALE,
-                h = current_char_data->size[1] * WORDS_SCALE,
+                w = character_data_arr[i].size[X],
+                h = character_data_arr[i].size[Y],
 
                 vertices[6][4] =
                 {
-                    // 
-                    { xpos,     ypos + h,   0.0f, 0.0f },
-                    { xpos,     ypos,       0.0f, 1.0f },
-                    { xpos + w, ypos,       1.0f, 1.0f },
+                    { x,     y + h,   0.0f, 0.0f },
+                    { x,     y,       0.0f, 1.0f },
+                    { x + w, y,       1.0f, 1.0f },
 
-                    { xpos,     ypos + h,   0.0f, 0.0f },
-                    { xpos + w, ypos,       1.0f, 1.0f },
-                    { xpos + w, ypos + h,   1.0f, 0.0f }
+                    { x,     y + h,   0.0f, 0.0f },
+                    { x + w, y,       1.0f, 1.0f },
+                    { x + w, y + h,   1.0f, 0.0f }
                 }
             ;
 
-            glBindTexture(GL_TEXTURE_2D, current_char_data->texture_id);
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBindTexture(GL_TEXTURE_2D, character_data_arr[i].texture_id);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            x_offset += (current_char_data->advance >> 6) * WORDS_SCALE;
+            x_offset += character_data_arr[i].advance >> 6;
         }
 
         glfwSwapBuffers(window);
