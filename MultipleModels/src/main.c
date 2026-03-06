@@ -229,10 +229,11 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void *) 0);
     glEnableVertexAttribArray(0);
 
-    // Precalculated via https://github.com/TehhX/Learning-C/blob/main/Assorted/slider_to_rgb.c with 6 steps. To test multiple VBOs single VAO
+    // Precalculated via https://github.com/TehhX/Learning-C/blob/main/Assorted/slider_to_rgb.c with 6 steps. Center point set to solid red. To test multiple VBOs single VAO
     float hex_colors[] =
     {
     //          R          G          B
+        1.000000f, 0.000000f, 0.000000f,
         1.000000f, 0.498039f, 0.000000f,
         0.796078f, 0.698039f, 0.200000f,
         0.596078f, 0.898039f, 0.400000f,
