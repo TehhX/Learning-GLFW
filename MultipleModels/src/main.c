@@ -1,4 +1,12 @@
-// A program to demonstrate multiple buffer objects. Press your number pad keys [0,2] to cycle the different models { 0=Square, 1=Triangle, 2=Hexagon }.
+/*
+    MultipleModels
+        A program to demonstrate multiple buffer objects. Press your number pad keys [0,3] to cycle the different models { 0=Square, 1=Triangle, 2=Hexagon, 3=Pentagon }.
+
+    Model demonstrations:
+        * 0=Square && 1=Triangle: Binding different models via their VAO's
+        * 2=Hexagon: Seperate VBOs for vertices and colors, that EBO's are also bindable via VAO's via 0=square
+        * 3=Pentagon: Using one VBO, but not interleaving data for the sake of glBufferSubData.
+*/
 
 #include "gensh.h"
 
@@ -29,7 +37,7 @@ void framebuffer_resize_callback(GLFWwindow *window, int width, int height)
 
 int currently_viewing = 0;
 
-// When 'E' pressed, toggle square to triangle or vice versa
+// When a given numpad button is released and in range of possible values, view appropriate model
 void key_press_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (action != GLFW_RELEASE)
@@ -41,7 +49,7 @@ void key_press_callback(GLFWwindow *window, int key, int scancode, int action, i
     const int next_viewing = key - GLFW_KEY_KP_0;
 
     // Is in range of possible model indices
-    if (next_viewing >= 0 && next_viewing <= 2)
+    if (next_viewing >= 0 && next_viewing <= 3)
     {
         currently_viewing = next_viewing;
     }
@@ -49,19 +57,12 @@ void key_press_callback(GLFWwindow *window, int key, int scancode, int action, i
 
 GLuint mm_create_program(const char *const shaderv_text, const char *const shaderf_text)
 {
-    GLuint
-        program = glCreateProgram(),
-        vshader = glCreateShader(GL_VERTEX_SHADER),
-        fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
+    GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vshader, 1, &shaderv_text, NULL);
-    glShaderSource(fshader, 1, &shaderf_text, NULL);
     glCompileShader(vshader);
-    glCompileShader(fshader);
 
-    int vshader_success, fshader_success;
+    int vshader_success;
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &vshader_success);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &fshader_success);
     if (!vshader_success)
     {
         char info_log[1024];
@@ -70,6 +71,15 @@ GLuint mm_create_program(const char *const shaderv_text, const char *const shade
         abort();
     }
 
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vshader);
+
+    GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fshader, 1, &shaderf_text, NULL);
+    glCompileShader(fshader);
+
+    int fshader_success;
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &fshader_success);
     if (!fshader_success)
     {
         char info_log[1024];
@@ -78,8 +88,8 @@ GLuint mm_create_program(const char *const shaderv_text, const char *const shade
         abort();
     }
 
-    glAttachShader(program, vshader);
     glAttachShader(program, fshader);
+
     glLinkProgram(program);
 
     int program_link_success;
@@ -88,12 +98,14 @@ GLuint mm_create_program(const char *const shaderv_text, const char *const shade
     {
         char info_log[1024];
         glGetProgramInfoLog(program, 1024, NULL, info_log);
+
         puts(info_log);
         abort();
     }
 
     glDetachShader(program, vshader);
     glDetachShader(program, fshader);
+
     glDeleteShader(vshader);
     glDeleteShader(fshader);
 
@@ -132,13 +144,16 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_resize_callback);
     glfwSetKeyCallback(window, key_press_callback);
+    glfwSwapInterval(0);
 
     gladLoadGL();
     glClearColor(0.2, 0.2, 0.2, 1.0);
 
     GLuint
         trisqr_program = mm_create_program(shader_trisqr_vert, shader_trisqr_frag),
-           hex_program = mm_create_program(shader_hex_vert, shader_hex_frag);
+           hex_program = mm_create_program(shader_hex_vert, shader_hex_frag),
+          pent_program = mm_create_program(shader_pent_vert, shader_pent_frag)
+    ;
 
     // An equilateral triangle centered about TRIANGLE_ORIGIN with side lengths described by TRIANGLE_SIDELEN
     float triangle_vertices[] =
@@ -267,26 +282,90 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_hex);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(hex_indices), hex_indices, GL_STATIC_DRAW);
 
+    GLuint vbo_pent;
+    glGenBuffers(1, &vbo_pent);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_pent);
+    // Allocate enough memory for 6 vec2 vertex position and 6 vec3 colors
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * (2 + 3), NULL, GL_DYNAMIC_DRAW);
+
+    GLfloat pent_vertices[] =
+    {
+        -0.500000, -0.500000,
+        -0.345491, -0.024472,
+        -0.904508, -0.206107,
+        -0.904508, -0.793893,
+        -0.345491, -0.975528,
+        +0.000000, -0.500000
+    };
+
+    // Buffer the data itself
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(pent_vertices), pent_vertices);
+
+    GLuint vao_pent;
+    glGenVertexArrays(1, &vao_pent);
+    glBindVertexArray(vao_pent);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void *) 0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *) (sizeof(float) * 12));
+    glEnableVertexAttribArray(1);
+
+    GLuint pent_indices[] =
+    {
+        0, 1, 2,
+        0, 2, 3,
+        0, 3, 4,
+        0, 4, 5,
+        0, 5, 1
+    };
+
+    GLuint ebo_pent;
+    glGenBuffers(1, &ebo_pent);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_pent);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(pent_indices), pent_indices, GL_STATIC_DRAW);
+
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
         switch (currently_viewing)
         {
-        case 0: // Square
+        // Square
+        case 0:
             glUseProgram(trisqr_program);
             glBindVertexArray(vao_sqr);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
             break;
-        case 1: // Triangle
+
+        // Triangle
+        case 1:
             glUseProgram(trisqr_program);
             glBindVertexArray(vao_tri);
             glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
-        case 2: // Hexagon
+
+        // Hexagon
+        case 2:
             glUseProgram(hex_program);
             glBindVertexArray(vao_hex);
             glDrawElements(GL_TRIANGLES, sizeof(hex_indices) / sizeof(*hex_indices), GL_UNSIGNED_INT, NULL);
+            break;
+
+        // Pentagon
+        case 3:
+            glUseProgram(pent_program);
+            glBindVertexArray(vao_pent);
+
+            // Change colors based on time, put into the same buffer as that of the vertices
+            float pent_colors[6 * 3];
+            for (int i = 0; i < 6 * 3; i += 3)
+            {
+                pent_colors[i]     = +sinf(glfwGetTime()) / 2.0f + 1.0f;
+                pent_colors[i + 1] = +cosf(glfwGetTime()) / 2.0f + 1.0f;
+                pent_colors[i + 2] = -sinf(glfwGetTime()) / 2.0f + 1.0f;
+            }
+            glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 2, sizeof(pent_colors), pent_colors);
+
+            glDrawElements(GL_TRIANGLES, sizeof(pent_indices) / sizeof(*pent_indices), GL_UNSIGNED_INT, NULL);
             break;
         }
 
@@ -294,6 +373,7 @@ int main()
         glfwPollEvents();
     }
 
+    // Cleanup
     glDeleteBuffers(1, &vbo_sqr);
     glDeleteVertexArrays(1, &vao_sqr);
     glDeleteBuffers(1, &ebo_sqr);
@@ -301,7 +381,16 @@ int main()
     glDeleteBuffers(1, &vbo_tri);
     glDeleteVertexArrays(1, &vao_tri);
 
+    glDeleteBuffers(1, &vbo_hex_vert);
+    glDeleteBuffers(1, &vbo_hex_col);
+    glDeleteVertexArrays(1, &vao_hex);
+
+    glDeleteBuffers(1, &vbo_pent);
+    glDeleteVertexArrays(1, &vao_pent);
+
     glDeleteProgram(trisqr_program);
+    glDeleteProgram(hex_program);
+    glDeleteProgram(pent_program);
 
     glfwMakeContextCurrent(NULL);
     glfwDestroyWindow(window);
