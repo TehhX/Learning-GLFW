@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 
     // Orthographic perspective. When multiplying by the produced mat4, y values between 0 and WINDOW_HEIGHT will be normalized between -1.0 and +1.0. The other values work similarly
     mat4 ortho_projection;
-    glm_ortho(0.0f, WINDOW_HEIGHT, 0.0f, WINDOW_WIDTH, -1.0f, 1.0f, ortho_projection);
+    glm_ortho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1, ortho_projection);
 
     glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, *ortho_projection);
 
